@@ -4,16 +4,16 @@
 A program that draws one front-page image summing up 23 November 2026
 world news: 52 verified stories, every one carrying its source.
 
-v5 revision of the v4 front page (same 52 verified stories, no story
-added or changed): the lead-1 Nvidia scene is rebuilt - the returning
-CEO is now a big figure (white shirt, red tie, briefcase) in a wide
-door, the wall chart is wider, a wall clock fills the empty dark
-space, and the desk monitor and NV chip are bigger, with +31% moved
-to the top right. Everything else is the v4 layout unchanged: a huge
-date, a THE DAY IN NUMBERS strip, a region bar, three leads with tall
-coloured scene panels and caption chips, ten featured stories each with
-its own small coloured scene strip, bold headlines, a three-column ALSO
-list, and a big world map with numbered pins.
+v6 revision of the v5 front page (same 52 verified stories, same
+layout, no story added or changed): the whole page is now rendered
+with 2x supersampling anti-aliasing - drawn at 2048x2048 and
+box-downsampled to 1024x1024 - so the hand-drawn stroke text renders
+visibly smoother instead of jagged and stair-stepped. Everything else
+is the v5 layout unchanged: a huge date, a THE DAY IN NUMBERS strip,
+a region bar, three leads with tall coloured scene panels and caption
+chips, ten featured stories each with its own small coloured scene
+strip, bold headlines, a three-column ALSO list, and a big world map
+with numbered pins.
 
 Pure Python standard library only. Stroke-based vector font (sfont.py),
 hand-rolled PNG encoder, no network, no randomness, deterministic output.
@@ -36,6 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sfont
 
 W, H = 1024, 1024
+SS = 2  # supersampling factor: draw at 2048x2048, downsample to 1024
 
 PAPER = (253, 250, 240)
 INK = (18, 18, 18)
@@ -93,29 +94,50 @@ def wrap(text, max_width, scale):
 
 
 # ---------------------------------------------------------------- canvas
+# Supersampling anti-aliasing (v6): the page is drawn at SSx resolution
+# into a 2048x2048 buffer and box-downsampled to 1024x1024. Every
+# public primitive takes LOGICAL (1024) coordinates and scales them by
+# SS once, so all layout code is unchanged; only the rasterization is
+# finer, which turns jagged stair-step text edges into smooth grey
+# transitions. Buffer-level helpers (_set, _rect, _hline) work in
+# buffer coordinates and never scale again.
 class Canvas:
-    def __init__(self, w, h, bg):
+    def __init__(self, w, h, bg, ss=1):
         self.w = w
         self.h = h
-        self.px = bytearray(w * h * 3)
+        self.ss = ss
+        self.bw = w * ss
+        self.bh = h * ss
+        self.px = bytearray(self.bw * self.bh * 3)
         self.rect(0, 0, w, h, bg)
 
-    def set(self, x, y, color):
-        if 0 <= x < self.w and 0 <= y < self.h:
-            i = (y * self.w + x) * 3
+    def _set(self, bx, by, color):
+        if 0 <= bx < self.bw and 0 <= by < self.bh:
+            i = (by * self.bw + bx) * 3
             self.px[i], self.px[i + 1], self.px[i + 2] = color
 
-    def rect(self, x, y, w, h, color):
-        x0 = max(0, x)
-        y0 = max(0, y)
-        x1 = min(self.w, x + w)
-        y1 = min(self.h, y + h)
-        r, g, b = color
+    def set(self, x, y, color):
+        self._set(x * self.ss, y * self.ss, color)
+
+    def _rect(self, bx, by, bw, bh, color):
+        x0 = max(0, bx)
+        y0 = max(0, by)
+        x1 = min(self.bw, bx + bw)
+        y1 = min(self.bh, by + bh)
+        if x1 <= x0 or y1 <= y0:
+            return
+        row = bytes(color) * (x1 - x0)
+        stride = self.bw * 3
         for yy in range(y0, y1):
-            base = (yy * self.w + x0) * 3
-            for xx in range(x0, x1):
-                i = base + (xx - x0) * 3
-                self.px[i], self.px[i + 1], self.px[i + 2] = r, g, b
+            base = yy * stride + x0 * 3
+            self.px[base:base + len(row)] = row
+
+    def rect(self, x, y, w, h, color):
+        ss = self.ss
+        self._rect(x * ss, y * ss, w * ss, h * ss, color)
+
+    def _hline(self, bx, by, bw, color):
+        self._rect(bx, by, bw, 1, color)
 
     def hline(self, x, y, w, color, thick=1):
         self.rect(x, y, w, thick, color)
@@ -130,18 +152,24 @@ class Canvas:
         self.vline(x + w - thick, y, h, color, thick)
 
     def line(self, x0, y0, x1, y1, color, thick=1):
-        """Bresenham line."""
+        """Bresenham line, rasterized in buffer coordinates."""
+        ss = self.ss
+        x0 *= ss
+        y0 *= ss
+        x1 *= ss
+        y1 *= ss
+        thick *= ss
         dx = abs(x1 - x0)
         dy = -abs(y1 - y0)
         sx = 1 if x0 < x1 else -1
         sy = 1 if y0 < y1 else -1
         err = dx + dy
+        half = thick // 2
         while True:
             if thick == 1:
-                self.set(x0, y0, color)
+                self._set(x0, y0, color)
             else:
-                self.rect(x0 - thick // 2, y0 - thick // 2,
-                          thick, thick, color)
+                self._rect(x0 - half, y0 - half, thick, thick, color)
             if x0 == x1 and y0 == y1:
                 break
             e2 = 2 * err
@@ -154,6 +182,8 @@ class Canvas:
 
     def poly(self, pts, color):
         """Scanline fill of a polygon (even-odd rule)."""
+        ss = self.ss
+        pts = [(x * ss, y * ss) for x, y in pts]
         if len(pts) < 3:
             return
         ys = [p[1] for p in pts]
@@ -169,8 +199,8 @@ class Canvas:
                     xs.append(x0 + (y - y0) * (x1 - x0) / (y1 - y0))
             xs.sort()
             for i in range(0, len(xs) - 1, 2):
-                self.hline(int(xs[i]), y,
-                           int(xs[i + 1]) - int(xs[i]) + 1, color)
+                self._hline(int(xs[i]), y,
+                            int(xs[i + 1]) - int(xs[i]) + 1, color)
 
     def polyline(self, pts, color, thick=1):
         """Closed polygon outline."""
@@ -182,14 +212,53 @@ class Canvas:
 
     def circle(self, cx, cy, r, color):
         """Filled circle."""
+        ss = self.ss
+        cx *= ss
+        cy *= ss
+        r *= ss
         for y in range(cy - r, cy + r + 1):
             dx = int((r * r - (y - cy) ** 2) ** 0.5)
-            self.hline(cx - dx, y, 2 * dx + 1, color)
+            self._hline(cx - dx, y, 2 * dx + 1, color)
 
     def ring(self, cx, cy, r, color, thick=1, inner=WHITE):
         """Circle outline: filled disc, then a smaller disc of `inner`."""
         self.circle(cx, cy, r, color)
         self.circle(cx, cy, r - thick, inner)
+
+    def downsample(self):
+        """Box-downsample the SSx buffer back to logical size.
+
+        Each output pixel is the rounded mean of its SSxSS source
+        block, so a flat area comes back byte-identical to a 1x render
+        and only edges gain smooth grey transitions. Integer math
+        only, so the result is deterministic across runs.
+        """
+        ss = self.ss
+        out = Canvas(self.w, self.h, PAPER, ss=1)
+        if ss == 1:
+            out.px[:] = self.px
+            return out
+        src = self.px
+        dst = out.px
+        sw = self.bw
+        n = ss * ss
+        for oy in range(self.h):
+            y0 = oy * ss
+            for ox in range(self.w):
+                x0 = ox * ss
+                r = g = b = 0
+                for dy in range(ss):
+                    base = ((y0 + dy) * sw + x0) * 3
+                    for dx in range(ss):
+                        i = base + dx * 3
+                        r += src[i]
+                        g += src[i + 1]
+                        b += src[i + 2]
+                o = (oy * self.w + ox) * 3
+                dst[o] = (r + n // 2) // n
+                dst[o + 1] = (g + n // 2) // n
+                dst[o + 2] = (b + n // 2) // n
+        return out
 
     def text(self, s, x, y, scale, color):
         return sfont.draw_text(self, s, x, y, scale, color)
@@ -817,8 +886,9 @@ def draw(c):
 
 
 def main():
-    c = Canvas(W, H, PAPER)
+    c = Canvas(W, H, PAPER, SS)
     draw(c)
+    c = c.downsample()
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", ".")
     path = os.path.join(out_dir, "entry.png")
     with open(path, "wb") as f:
