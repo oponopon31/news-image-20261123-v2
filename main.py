@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""The World in One Day - Monday 23 November 2026 (v4).
+"""The World in One Day - Monday 23 November 2026 (v5).
 
 A program that draws one front-page image summing up 23 November 2026
 world news: 52 verified stories, every one carrying its source.
 
-v4 rebuild in the style of the best-scoring news22 front page: a huge
+v5 revision of the v4 front page (same 52 verified stories, no story
+added or changed): the lead-1 Nvidia scene is rebuilt - the returning
+CEO is now a big figure (white shirt, red tie, briefcase) in a wide
+door, the wall chart is wider, a wall clock fills the empty dark
+space, and the desk monitor and NV chip are bigger, with +31% moved
+to the top right. Everything else is the v4 layout unchanged: a huge
 date, a THE DAY IN NUMBERS strip, a region bar, three leads with tall
 coloured scene panels and caption chips, ten featured stories each with
 its own small coloured scene strip, bold headlines, a three-column ALSO
@@ -369,42 +374,50 @@ DATE_CHECK = ("EVERY STORY ON THIS PAGE HAPPENED OR WAS FIRST REPORTED ON "
 
 def draw_lead_scene(c, i, x, y, w, h):
     if i == 0:
-        # Nvidia office at night: dark blue room, desk, a figure walking
-        # back in, a green chart rising on the wall, a chip on the desk.
+        # Nvidia office at night: dark blue room, a BIG figure walking
+        # back in (the returning CEO, white shirt, red tie, briefcase),
+        # a wide green chart on the wall, a wall clock, a desk with a
+        # big monitor and a blue NV chip, +31% top right. v5: the v4
+        # figure was a small stick man and the top right was empty dark
+        # space; the figure is now twice as tall and the clock fills it.
         c.rect(x, y, w, h, DARKBLUE)
         c.rect(x, y + h - 14, w, 14, (196, 164, 110))  # floor
-        # wall chart, green line climbing
-        c.rect(x + 14, y + 8, 96, 26, WHITE)
-        c.box(x + 14, y + 8, 96, 26, INK, 1)
-        c.line(x + 20, y + 30, x + 40, y + 24, GREEN, 2)
-        c.line(x + 40, y + 24, x + 62, y + 26, GREEN, 2)
-        c.line(x + 62, y + 26, x + 86, y + 14, GREEN, 2)
-        c.line(x + 86, y + 14, x + 102, y + 12, GREEN, 2)
-        # figure walking back in through the door
-        c.rect(x + 128, y + 4, 36, h - 18, (120, 90, 60))
-        c.box(x + 128, y + 4, 36, h - 18, INK, 1)
-        hx, hy = x + 146, y + 20
-        c.circle(hx, hy, 6, WHITE)
-        c.line(hx, hy + 7, hx, hy + 21, WHITE, 3)
-        c.line(hx, hy + 28, hx - 9, hy + 32, WHITE, 2)
-        c.line(hx, hy + 28, hx + 9, hy + 32, WHITE, 2)
-        c.line(hx, hy + 12, hx - 10, hy + 18, WHITE, 2)
-        c.line(hx, hy + 12, hx + 10, hy + 17, WHITE, 2)
-        c.rect(hx + 12, hy + 18, 12, 10, WHITE)
-        # desk with monitor and chip
-        c.rect(x + 190, y + 40, 112, 6, (120, 90, 60))
-        c.rect(x + 196, y + 44, 5, h - 44 - 14, (120, 90, 60))
-        c.rect(x + 290, y + 44, 5, h - 44 - 14, (120, 90, 60))
-        c.rect(x + 206, y + 22, 34, 18, INK)
-        c.rect(x + 209, y + 25, 28, 12, LIGHT)
+        # wide wall chart, green line climbing
+        c.rect(x + 8, y + 6, 110, 28, WHITE)
+        c.box(x + 8, y + 6, 110, 28, INK, 1)
+        c.line(x + 14, y + 30, x + 38, y + 22, GREEN, 2)
+        c.line(x + 38, y + 22, x + 62, y + 25, GREEN, 2)
+        c.line(x + 62, y + 25, x + 88, y + 14, GREEN, 2)
+        c.line(x + 88, y + 14, x + 110, y + 11, GREEN, 2)
+        # wide door, big figure walking back in
+        c.rect(x + 128, y + 2, 50, h - 16, (120, 90, 60))
+        c.box(x + 128, y + 2, 50, h - 16, INK, 1)
+        hx, hy = x + 153, y + 16
+        c.circle(hx, hy, 8, WHITE)                       # head
+        c.rect(hx - 5, hy + 9, 10, 13, WHITE)            # shirt
+        c.line(hx, hy + 9, hx, hy + 20, RED, 2)          # tie
+        c.line(hx - 5, hy + 12, hx - 13, hy + 19, WHITE, 2)  # left arm
+        c.line(hx + 5, hy + 12, hx + 13, hy + 19, WHITE, 2)  # right arm
+        c.line(hx - 3, hy + 22, hx - 5, hy + 33, WHITE, 3)   # left leg
+        c.line(hx + 3, hy + 22, hx + 5, hy + 33, WHITE, 3)   # right leg
+        c.rect(hx + 9, hy + 17, 13, 10, (120, 90, 60))   # briefcase
+        c.box(hx + 9, hy + 17, 13, 10, INK, 1)
+        # wall clock filling the gap above the desk
+        c.ring(x + 222, y + 12, 7, INK, 1, WHITE)
+        c.line(x + 222, y + 12, x + 222, y + 6, INK, 1)
+        c.line(x + 222, y + 12, x + 227, y + 14, INK, 1)
+        # desk with a big monitor and a blue NV chip
+        c.rect(x + 196, y + 40, 114, 6, (120, 90, 60))
+        c.rect(x + 206, y + 22, 36, 18, INK)
+        c.rect(x + 209, y + 25, 30, 12, LIGHT)
         c.line(x + 212, y + 34, x + 220, y + 29, RED, 1)
         c.line(x + 220, y + 29, x + 228, y + 31, RED, 1)
-        c.line(x + 228, y + 31, x + 234, y + 27, RED, 1)
-        c.rect(x + 258, y + 24, 26, 16, BLUE)
-        for px in (x + 264, x + 272, x + 280):
+        c.line(x + 228, y + 31, x + 236, y + 27, RED, 1)
+        c.rect(x + 252, y + 24, 34, 16, BLUE)
+        for px in (x + 260, x + 268, x + 276):
             c.vline(px, y + 20, 4, BLUE, 2)
-        c.text("NV", x + 264, y + 29, 1, WHITE)
-        c.text("+31%", x + 176, y + 10, 2, (120, 220, 120))
+        c.text("NV", x + 263, y + 29, 1, WHITE)
+        c.text("+31%", x + 262, y + 4, 2, (120, 220, 120))
         c.chip("CONFIRMED - BBC", x + 6, y + h - 13)
     elif i == 1:
         # Wall Street: navy night sky, lit skyline, a bold red arrow
