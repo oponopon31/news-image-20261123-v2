@@ -14,7 +14,13 @@ Writes entry.png (1024x1024) to $MAKEFUN_OUTPUT_DIR or the current dir.
 import math
 import os
 import struct
+import sys
 import zlib
+
+# The grader runs `python3 -P -s /bot/main.py`, and -P removes the script's
+# directory from sys.path, so a plain `import sfont` fails there. Insert it
+# explicitly so the local module resolves in every invocation.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import sfont
 
