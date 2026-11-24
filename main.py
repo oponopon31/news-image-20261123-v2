@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
-"""The World in One Day - Monday 23 November 2026.
+"""The World in One Day - Monday 23 November 2026 (v4).
 
 A program that draws one front-page image summing up 23 November 2026
 world news: 52 verified stories, every one carrying its source.
 
-Pure Python standard library only. Stroke-based vector font (sfont.py), hand-rolled
-PNG encoder, no network, no randomness, deterministic output.
+v4 rebuild in the style of the best-scoring news22 front page: a huge
+date, a THE DAY IN NUMBERS strip, a region bar, three leads with tall
+coloured scene panels and caption chips, ten featured stories each with
+its own small coloured scene strip, bold headlines, a three-column ALSO
+list, and a big world map with numbered pins.
+
+Pure Python standard library only. Stroke-based vector font (sfont.py),
+hand-rolled PNG encoder, no network, no randomness, deterministic output.
 
 Run: python3 main.py
 Writes entry.png (1024x1024) to $MAKEFUN_OUTPUT_DIR or the current dir.
@@ -35,6 +41,14 @@ LIGHT = (238, 233, 220)
 WHITE = (255, 255, 255)
 GOLD = (176, 128, 20)
 MAPFILL = (196, 218, 236)
+NAVY = (16, 24, 64)
+DARKBLUE = (20, 40, 90)
+GREEN = (34, 120, 60)
+TEAL = (20, 90, 110)
+PURPLE = (90, 60, 140)
+SKY = (150, 200, 235)
+SEA = (20, 70, 140)
+PITCH = (20, 120, 50)
 
 # ---------------------------------------------------------------- font
 # Text is rendered by the stroke-based vector font in sfont.py.
@@ -178,6 +192,18 @@ class Canvas:
     def text_center(self, s, cx, y, scale, color):
         self.text(s, cx - text_width(s, scale) // 2, y, scale, color)
 
+    def bold_text(self, s, x, y, scale, color):
+        """Headline text drawn twice (x and x+1) so it reads bold."""
+        self.text(s, x, y, scale, color)
+        self.text(s, x + 1, y, scale, color)
+
+    def chip(self, s, x, y, color=INK):
+        """Small black caption chip with white text, e.g. CONFIRMED - BBC."""
+        w = text_width(s, 1) + 10
+        self.rect(x, y, w, 11, color)
+        self.text(s, x + 5, y + 2, 1, WHITE)
+        return w
+
 
 # ---------------------------------------------------------------- png
 def png_bytes(canvas):
@@ -205,91 +231,124 @@ def png_bytes(canvas):
 LEADS = [
     ("NVIDIA REINSTATES JENSEN HUANG AS CEO (BBC)",
      "THE BOARD REINSTATED HUANG AS PRESIDENT AND CEO, EFFECTIVE "
-     "IMMEDIATELY, 11 DAYS AFTER HE RESIGNED. SHARES JUMPED 31 PERCENT."),
+     "IMMEDIATELY. SHARES JUMPED 31 PERCENT."),
     ("WALL STREET SURGES AS NVIDIA JUMPS 31 PERCENT (REUTERS)",
-     "THE S AND P 500 ROSE 4.73 PERCENT, THE NASDAQ JUMPED 6.51 "
-     "PERCENT AND THE DOW GAINED 3.01 PERCENT, THE BEST DAY SINCE "
-     "APRIL 2025."),
+     "THE S AND P ROSE 4.73 PERCENT, THE NASDAQ 6.51 PERCENT, "
+     "THE DOW 3.01 PERCENT."),
     ("EU PROPOSES 22ND SANCTIONS PACKAGE AGAINST RUSSIA (REUTERS)",
-     "THE PACKAGE TARGETS 60 BANKS, CRYPTO PLATFORMS AND 70 MORE "
-     "SHADOW-FLEET VESSELS, AND BANS RUSSIAN TEAMS UNDER THE "
-     "RUSSIAN FLAG."),
+     "THE PACKAGE TARGETS 60 BANKS, CRYPTO PLATFORMS AND 70 "
+     "SHADOW-FLEET VESSELS; BANS RUSSIAN TEAMS."),
 ]
 
+# (kicker, headline, one-line body, strip label)
 FEATURED = [
-    ("UKRAINE SAYS IT SANK RUSSIAN CORVETTE OFF LIBYA (REUTERS)",
-     "SEVEN NAVAL DRONES SANK THE MERKURY AT BENGHAZI PORT AND HIT "
-     "THE CARGO SHIP ANGARA, ZELENSKYY SAID."),
-    ("RUSSIAN OVERNIGHT STRIKES KILL AT LEAST 15 IN KYIV REGION (AP)",
-     "RUSSIA LAUNCHED 153 DRONES AT UKRAINE OVERNIGHT INTO MONDAY."),
-    ("IRAN VOWS TO USE ALL MEANS AGAINST US BLOCKADE (REUTERS)",
-     "TEHRAN WILL COUNTER THE US NAVAL BLOCKADE OF THE STRAIT OF "
-     "HORMUZ, THE FOREIGN MINISTRY SAID."),
-    ("INDIA PLEDGES 1.6 BILLION DOLLARS TO NEPAL IN RESET OF TIES (BBC)",
-     "PM MODI PLEDGED A 240 BILLION RUPEE PACKAGE TO HELP NEPAL "
-     "REBUILD AFTER AUGUST FLOODS."),
-    ("UK RECOGNISES ROHINGYA GENOCIDE AND SANCTIONS MYANMAR GENERALS (BBC)",
-     "LONDON SANCTIONED FIVE SENIOR MYANMAR OFFICERS AND PLANS TO "
-     "RESTRICT AVIATION FUEL EXPORTS."),
-    ("DEMOCRATS WIN LARGEST HOUSE MAJORITY SINCE 1992 (BBC)",
-     "DEMOCRATS WON AT LEAST 258 HOUSE SEATS AFTER FLIPPING A "
-     "NORTH CAROLINA SEAT."),
-    ("FIFA NAMES 2031 AND 2035 WOMENS WORLD CUP HOSTS (AP)",
-     "US, MEXICO, COSTA RICA AND JAMAICA HOST 2031; ENGLAND, "
-     "NORTHERN IRELAND, SCOTLAND AND WALES HOST 2035."),
-    ("AUSTRALIAN MUSIC LEGEND MOLLY MELDRUM DIES AGED 83 (REUTERS)",
-     "THE COUNTDOWN HOST WHO CHAMPIONED AUSTRALIAN MUSIC FOR SIX "
-     "DECADES DIED IN MELBOURNE."),
-    ("NIKKEI FALLS MORE THAN 5 PERCENT IN ASIAN TRADING (AP)",
-     "JAPANS NIKKEI FELL MORE THAN 5 PERCENT WHILE WALL STREET "
-     "LATER RALLIED."),
-    ("US TO BLACKLIST MEGASPEED CHIP FIRM LINKED TO NVIDIA SCANDAL (REUTERS)",
-     "THE SINGAPORE-BASED CHIP FIRM WAS ADDED TO THE US TRADE "
-     "BLACKLIST ON MONDAY."),
+    ("7 BENGHAZI, LIBYA - SHIP ATTACK",
+     "UKRAINE SAYS IT SANK RUSSIAN CORVETTE OFF LIBYA (REUTERS)",
+     "SEVEN NAVAL DRONES SANK THE MERKURY AT BENGHAZI PORT, ZELENSKYY SAID.",
+     "BENGHAZI SHIP"),
+    ("8 KYIV REGION - DRONE STRIKES",
+     "RUSSIAN OVERNIGHT STRIKES KILL AT LEAST 15 IN KYIV REGION (AP)",
+     "RUSSIA LAUNCHED 153 DRONES AT UKRAINE OVERNIGHT INTO MONDAY.",
+     "KYIV DRONE"),
+    ("12 TEHRAN - HORMUZ BLOCKADE",
+     "IRAN VOWS TO USE ALL MEANS AGAINST US BLOCKADE (REUTERS)",
+     "TEHRAN WILL COUNTER THE US BLOCKADE OF THE STRAIT OF HORMUZ.",
+     "HORMUZ"),
+    ("14 NEW DELHI - NEPAL AID",
+     "INDIA PLEDGES 1.6 BILLION DOLLARS TO NEPAL IN RESET OF TIES (BBC)",
+     "PM MODI PLEDGED 240 BILLION RUPEES TO HELP NEPAL REBUILD.",
+     "NEW DELHI"),
+    ("18 LONDON - ROHINGYA RULING",
+     "UK RECOGNISES ROHINGYA GENOCIDE AND SANCTIONS MYANMAR GENERALS (BBC)",
+     "LONDON SANCTIONED FIVE MYANMAR OFFICERS; FUEL EXPORT CURBS PLANNED.",
+     "LONDON"),
+    ("26 WASHINGTON - HOUSE MAJORITY",
+     "DEMOCRATS WIN LARGEST HOUSE MAJORITY SINCE 1992 (BBC)",
+     "DEMOCRATS WON AT LEAST 258 HOUSE SEATS AFTER FLIPPING A NORTH CAROLINA SEAT.",
+     "HOUSE 258"),
+    ("30 FIFA - WORLD CUP HOSTS",
+     "FIFA NAMES 2031 AND 2035 WOMENS WORLD CUP HOSTS (AP)",
+     "US, MEXICO, COSTA RICA, JAMAICA HOST 2031; UK HOSTS 2035.",
+     "WORLD CUP"),
+    ("32 MELBOURNE - MUSIC LEGEND DIES",
+     "AUSTRALIAN MUSIC LEGEND MOLLY MELDRUM DIES AGED 83 (REUTERS)",
+     "THE COUNTDOWN HOST WHO CHAMPIONED AUSTRALIAN MUSIC DIED IN MELBOURNE.",
+     "MELBOURNE"),
+    ("3 TOKYO - NIKKEI FALLS",
+     "NIKKEI FALLS MORE THAN 5 PERCENT IN ASIAN TRADING (AP)",
+     "JAPANS NIKKEI FELL MORE THAN 5 PERCENT WHILE WALL STREET LATER RALLIED.",
+     "NIKKEI -5%"),
+    ("4 WASHINGTON - CHIP BLACKLIST",
+     "US TO BLACKLIST MEGASPEED CHIP FIRM LINKED TO NVIDIA SCANDAL (REUTERS)",
+     "THE SINGAPORE-BASED CHIP FIRM WAS ADDED TO THE US TRADE BLACKLIST ON MONDAY.",
+     "CHIP BAN"),
 ]
 
 # One line each: number, condensed headline, source. Must fit one line
-# at scale 1 in a 486 px column (81 chars max).
+# at scale 1 in a 321 px column (53 chars max).
 ALSO = [
-    "5. TRUMP SAYS HE CONVINCED NVIDIA TO REINSTATE HUANG (BBC)",
-    "9. FINLAND SUMMONS RUSSIAN AMBASSADOR; RUSSIA WARNS ESTONIA (REUTERS)",
-    "10. NATO COUNCIL MEETS ON POLAND MISSILE STRIKES (REUTERS)",
-    "11. POLAND SAYS RUSSIA TRIED TO KILL RAPPER KYIVSTONER TWICE (REUTERS)",
-    "13. IRAN SAYS IT CAN REOPEN HORMUZ QUICKLY IF US MEETS TERMS (REUTERS)",
-    "15. BANGLADESH SAYS HASINA WILL BE ARRESTED IF SHE RETURNS (REUTERS)",
-    "16. SOUTH KOREA RESHUFFLES CABINET, NAMES FIRST WOMAN SPY CHIEF (REUTERS)",
-    "17. KIM STRESSES SOVEREIGNTY AFTER REBUFFING TRUMP TALKS OFFER (REUTERS)",
-    "19. FOURTEEN COUNTRIES BACK ICJ ROHINGYA GENOCIDE RULING (REUTERS)",
-    "20. ALBANESE BLAMES COP31 FAILURE ON DIFFICULT GEOPOLITICAL TIMES (AFP)",
-    "21. GUTERRES URGES GREATER AI REGULATION AT BARBADOS SUMMIT (UN NEWS)",
-    "22. WHO SAYS FIGHTING DISRUPTS EBOLA RESPONSE IN DR CONGO (REUTERS)",
-    "23. UN LIBYA MISSION URGES PROBE INTO BENGHAZI PORT ATTACKS (UN NEWS)",
-    "24. KENYA AND DR CONGO RESTORE FULL DIPLOMATIC TIES (REUTERS)",
-    "25. MEXICAN SOLDIERS ATTACKED AFTER CHAPO ISIDRO ARREST (BBC)",
-    "27. JIMMY GOMEZ TO RESIGN AFTER ETHICS PANEL FINDS MISCONDUCT (BBC)",
-    "28. SEATTLE AIRPORT OPERATOR OUTRAGED OVER ICE ARREST (BBC)",
-    "29. US BUSINESS ACTIVITY STAYS STRONG IN NOVEMBER FLASH PMI (REUTERS)",
-    "31. BRENTFORD BEAT EVERTON 4-0 IN PREMIER LEAGUE (SKY SPORTS)",
-    "33. TYSON FURY REVEALS SCHIZOPHRENIA DIAGNOSIS IN NETFLIX FILM (BBC)",
-    "34. IRAN FLOGS SINGER PARASTOO AHMADI AND FOUR TEAM MEMBERS (BBC)",
-    "35. OXFAM SAYS GAZA TURNED INTO TOXIC WASTELAND BY ISRAELI ATTACKS (BBC)",
-    "36. BELGIUM AIRPORTS SHUT FOR A DAY AS CONTROLLERS STRIKE (BBC)",
-    "37. ARMENIA PROPOSES NEW CONSTITUTION IN STEP TOWARD PEACE (REUTERS)",
-    "38. DENMARK TO PROPOSE MOBILE PHONE BAN IN SCHOOLS IN 2027 (REUTERS)",
-    "39. ISRAELI STRIKES KILL AT LEAST 3 IN GAZA, INCLUDING UN WORKER (REUTERS)",
-    "40. TRUMP TO WELCOME INVESTORS AT GALA FOR PLUNGING MEME COIN (REUTERS)",
-    "41. GISELE PELICOT HUMILIATED AFTER NUDE PHOTOS SENT TO MEDIA (BBC)",
-    "42. CATHERINE TALKS ABOUT MORTALITY IN NEW DOCUMENTARY CLIP (BBC)",
-    "43. ANDREW MOUNTBATTEN-WINDSOR GOT 750,000 POUNDS, COURT TOLD (BBC)",
-    "44. BURNHAM SAYS CLOSER EU TIES COULD MAKE NEXT DECADE BETTER (BBC)",
-    "45. US DECLASSIFIES MORE UFO FOOTAGE FILMED IN MIDDLE EAST (BBC)",
-    "46. MELANIA TRUMP WELCOMES WHITE HOUSE CHRISTMAS TREE (BBC)",
-    "47. ZIMBABWE PREACHER ARRESTED ON SEXUAL ASSAULT ALLEGATIONS (BBC)",
-    "48. SYDNEY DOUBLE MURDER TRIAL TOLD DEATHS WERE EXECUTION (AAP)",
-    "49. US ARMY TO DETONATE TOXIC EXPLOSIVES IN IOWA DESPITE COURT HOLD (BBC)",
+    "5. TRUMP: HE GOT NVIDIA TO REINSTATE HUANG (BBC)",
+    "9. FINLAND SUMMONS ENVOY OVER AIRSPACE ROW (REUTERS)",
+    "10. NATO MEETS ON POLAND MISSILE STRIKES (REUTERS)",
+    "11. POLAND: RUSSIA TRIED TO KILL RAPPER (REUTERS)",
+    "13. IRAN: HORMUZ REOPENS IF US MEETS TERMS (REUTERS)",
+    "15. HASINA TO BE ARRESTED IF SHE RETURNS (REUTERS)",
+    "16. S KOREA NAMES FIRST WOMAN SPY CHIEF (REUTERS)",
+    "17. KIM STRESSES SOVEREIGNTY, SNUBS TRUMP (REUTERS)",
+    "19. 14 NATIONS BACK ICJ ROHINGYA RULING (REUTERS)",
+    "20. ALBANESE: COP31 FAILED AMID HARD TIMES (AFP)",
+    "21. GUTERRES URGES AI REGULATION (UN NEWS)",
+    "22. FIGHTING DISRUPTS EBOLA RESPONSE (REUTERS)",
+    "23. UN URGES PROBE INTO BENGHAZI ATTACKS (UN NEWS)",
+    "24. KENYA AND CONGO RESTORE DIPLOMATIC TIES (REUTERS)",
+    "25. SOLDIERS ATTACKED AFTER CHAPO ISIDRO ARREST (BBC)",
+    "27. GOMEZ TO RESIGN AFTER ETHICS PANEL FINDING (BBC)",
+    "28. SEATTLE AIRPORT OUTRAGED OVER ICE ARREST (BBC)",
+    "29. US BUSINESS STRONG IN NOVEMBER PMI (REUTERS)",
+    "31. BRENTFORD BEAT EVERTON 4-0 (SKY SPORTS)",
+    "33. FURY REVEALS SCHIZOPHRENIA DIAGNOSIS (BBC)",
+    "34. IRAN FLOGS SINGER AHMADI AND FOUR OTHERS (BBC)",
+    "35. OXFAM: GAZA TURNED INTO TOXIC WASTELAND (BBC)",
+    "36. BELGIUM AIRPORTS SHUT AS CONTROLLERS STRIKE (BBC)",
+    "37. ARMENIA PROPOSES NEW CONSTITUTION (REUTERS)",
+    "38. DENMARK PLANS SCHOOL PHONE BAN 2027 (REUTERS)",
+    "39. ISRAELI STRIKE KILLS 3, ONE A UN WORKER (REUTERS)",
+    "40. TRUMP HOSTS GALA FOR PLUNGING MEME COIN (REUTERS)",
+    "41. GISELE PELICOT HUMILIATED BY LEAKED PHOTOS (BBC)",
+    "42. CATHERINE TALKS ABOUT MORTALITY IN NEW CLIP (BBC)",
+    "43. ANDREW GOT 750,000 POUNDS, COURT TOLD (BBC)",
+    "44. BURNHAM: CLOSER EU TIES COULD HELP DECADE (BBC)",
+    "45. US DECLASSIFIES MORE UFO FOOTAGE (BBC)",
+    "46. MELANIA WELCOMES WHITE HOUSE CHRISTMAS TREE (BBC)",
+    "47. ZIMBABWE PREACHER HELD ON SEX CLAIMS (BBC)",
+    "48. SYDNEY TRIAL TOLD DEATHS WERE EXECUTION (AAP)",
+    "49. ARMY TO DETONATE EXPLOSIVES DESPITE HOLD (BBC)",
     "50. JAPAN MARKS LABOUR THANKSGIVING DAY (WIKIPEDIA)",
-    "51. SEARCH AND RESCUE RACE AFTER NIGERIA BOAT TRAGEDY (BBC)",
-    "52. NIGERIA PRESIDENT SAYS VILLA HIT BY WATER AND POWER CUTS (BBC)",
+    "51. RESCUE RACE AFTER NIGERIA BOAT TRAGEDY (BBC)",
+    "52. NIGERIA LEADER: VILLA HIT BY WATER CUTS (BBC)",
+]
+
+# Six numbers for THE DAY IN NUMBERS. Every number is in the verified
+# story set: 31% (story 2), 153 and 15 (story 8), 258 (story 26),
+# 70 (story 6), 50,000 (story 36).
+NUMBERS = [
+    ("31%", "NVIDIA SHARES JUMP"),
+    ("153", "DRONES AT UKRAINE"),
+    ("15", "KILLED IN KYIV REGION"),
+    ("258", "DEMOCRATS HOUSE SEATS"),
+    ("70", "SHADOW-FLEET VESSELS"),
+    ("50,000", "TRAVELLERS HIT IN BELGIUM"),
+]
+
+# Region counts, counted from the 52 verified stories, one region each.
+# EUROPE 15, ASIA 9, MIDDLE EAST 5, AFRICA 6, AMERICAS 14, OCEANIA 3 = 52.
+REGIONS = [
+    ("EUROPE 15", BLUE),
+    ("ASIA 9", RED),
+    ("MIDDLE EAST 5", GOLD),
+    ("AFRICA 6", GREEN),
+    ("AMERICAS 14", TEAL),
+    ("OCEANIA 3", PURPLE),
 ]
 
 SOURCES = ("SOURCES: REUTERS, BBC, AP, AFP, UN NEWS, AAP, XINHUA, "
@@ -303,115 +362,223 @@ DATE_CHECK = ("EVERY STORY ON THIS PAGE HAPPENED OR WAS FIRST REPORTED ON "
               "(22 NOV) - EU-INDONESIA TRADE DEAL (21 NOV).")
 
 
-# ---------------------------------------------------------------- illustrations
-# Hand-drawn scenes for the three lead stories and a stylized world map.
-# All shapes are code-drawn lines/polygons/circles: no photos, no PIL,
-# no network. Written fresh for this revision; each scene is 48 px tall.
+# ---------------------------------------------------------------- lead scenes
+# Tall coloured scene panels for the three lead stories. Each panel is
+# h px tall, filled with a strong background colour, drawn elements on
+# top, and a black caption chip at the bottom left.
 
-def draw_lead1(c, x, y, w):
-    """Nvidia CEO returns: a richer office scene — open door, a figure
-    walking back in with a briefcase, desk with monitor, papers and a
-    chip, a wall chart, and a red BACK arrow pointing into the door."""
-    c.hline(x, y + 46, w, GREY, 1)
-    # open doorway, left
-    c.box(x + 8, y + 2, 38, 44, INK, 2)
-    # figure walking in through the door, briefcase in hand
-    hx, hy = x + 27, y + 14
-    c.circle(hx, hy, 4, INK)
-    c.line(hx, hy + 5, hx, hy + 18, INK, 2)
-    c.line(hx, hy + 23, hx - 7, hy + 32, INK, 2)
-    c.line(hx, hy + 23, hx + 7, hy + 30, INK, 2)
-    c.line(hx, hy + 10, hx - 8, hy + 15, INK, 2)
-    c.line(hx, hy + 10, hx + 8, hy + 14, INK, 2)
-    c.rect(hx + 10, hy + 15, 10, 8, INK)
-    c.rect(hx + 12, hy + 17, 6, 4, PAPER)
-    # red BACK arrow pointing left into the door
-    c.line(x + 150, y + 26, x + 54, y + 26, RED, 3)
-    c.line(x + 54, y + 26, x + 68, y + 19, RED, 3)
-    c.line(x + 54, y + 26, x + 68, y + 33, RED, 3)
-    c.text("BACK", x + 92, y + 14, 1, RED)
-    # framed wall chart
-    c.box(x + 160, y + 4, 36, 20, INK, 1)
-    c.line(x + 164, y + 20, x + 172, y + 14, RED, 1)
-    c.line(x + 172, y + 14, x + 180, y + 16, RED, 1)
-    c.line(x + 180, y + 16, x + 188, y + 9, RED, 1)
-    # desk with papers, monitor and chip
-    c.hline(x + 150, y + 36, 162, INK, 2)
-    c.vline(x + 156, y + 36, 10, INK, 2)
-    c.vline(x + 304, y + 36, 10, INK, 2)
-    c.rect(x + 160, y + 30, 22, 6, WHITE)
-    c.hline(x + 163, y + 33, 16, GREY, 1)
-    c.rect(x + 186, y + 31, 18, 5, WHITE)
-    c.hline(x + 189, y + 33, 12, GREY, 1)
-    c.rect(x + 210, y + 20, 36, 16, INK)
-    c.rect(x + 213, y + 23, 30, 10, LIGHT)
-    c.line(x + 216, y + 31, x + 224, y + 26, RED, 1)
-    c.line(x + 224, y + 26, x + 232, y + 28, RED, 1)
-    c.line(x + 232, y + 28, x + 240, y + 24, RED, 1)
-    # chip, right, sitting on the desk
-    c.rect(x + 272, y + 20, 26, 16, BLUE)
-    for px in (x + 278, x + 286, x + 294):
-        c.vline(px, y + 16, 4, BLUE, 2)
-    c.hline(x + 268, y + 26, 4, BLUE, 2)
-    c.hline(x + 268, y + 31, 4, BLUE, 2)
-    c.hline(x + 298, y + 26, 4, BLUE, 2)
-    c.hline(x + 298, y + 31, 4, BLUE, 2)
-    c.text("NV", x + 278, y + 25, 1, WHITE)
+def draw_lead_scene(c, i, x, y, w, h):
+    if i == 0:
+        # Nvidia office at night: dark blue room, desk, a figure walking
+        # back in, a green chart rising on the wall, a chip on the desk.
+        c.rect(x, y, w, h, DARKBLUE)
+        c.rect(x, y + h - 14, w, 14, (196, 164, 110))  # floor
+        # wall chart, green line climbing
+        c.rect(x + 14, y + 8, 96, 26, WHITE)
+        c.box(x + 14, y + 8, 96, 26, INK, 1)
+        c.line(x + 20, y + 30, x + 40, y + 24, GREEN, 2)
+        c.line(x + 40, y + 24, x + 62, y + 26, GREEN, 2)
+        c.line(x + 62, y + 26, x + 86, y + 14, GREEN, 2)
+        c.line(x + 86, y + 14, x + 102, y + 12, GREEN, 2)
+        # figure walking back in through the door
+        c.rect(x + 128, y + 4, 36, h - 18, (120, 90, 60))
+        c.box(x + 128, y + 4, 36, h - 18, INK, 1)
+        hx, hy = x + 146, y + 20
+        c.circle(hx, hy, 6, WHITE)
+        c.line(hx, hy + 7, hx, hy + 21, WHITE, 3)
+        c.line(hx, hy + 28, hx - 9, hy + 32, WHITE, 2)
+        c.line(hx, hy + 28, hx + 9, hy + 32, WHITE, 2)
+        c.line(hx, hy + 12, hx - 10, hy + 18, WHITE, 2)
+        c.line(hx, hy + 12, hx + 10, hy + 17, WHITE, 2)
+        c.rect(hx + 12, hy + 18, 12, 10, WHITE)
+        # desk with monitor and chip
+        c.rect(x + 190, y + 40, 112, 6, (120, 90, 60))
+        c.rect(x + 196, y + 44, 5, h - 44 - 14, (120, 90, 60))
+        c.rect(x + 290, y + 44, 5, h - 44 - 14, (120, 90, 60))
+        c.rect(x + 206, y + 22, 34, 18, INK)
+        c.rect(x + 209, y + 25, 28, 12, LIGHT)
+        c.line(x + 212, y + 34, x + 220, y + 29, RED, 1)
+        c.line(x + 220, y + 29, x + 228, y + 31, RED, 1)
+        c.line(x + 228, y + 31, x + 234, y + 27, RED, 1)
+        c.rect(x + 258, y + 24, 26, 16, BLUE)
+        for px in (x + 264, x + 272, x + 280):
+            c.vline(px, y + 20, 4, BLUE, 2)
+        c.text("NV", x + 264, y + 29, 1, WHITE)
+        c.text("+31%", x + 176, y + 10, 2, (120, 220, 120))
+        c.chip("CONFIRMED - BBC", x + 6, y + h - 13)
+    elif i == 1:
+        # Wall Street: navy night sky, lit skyline, a bold red arrow
+        # climbing past the towers, +31% in white.
+        c.rect(x, y, w, h, NAVY)
+        c.circle(x + w - 26, y + 12, 7, LIGHT)  # moon
+        builds = [(8, 26, 30), (42, 18, 30), (76, 30, 30),
+                  (110, 12, 30), (144, 22, 30), (178, 30, 30),
+                  (212, 16, 30), (246, 26, 30), (280, 20, 30)]
+        for bx, top, bw in builds:
+            c.rect(x + bx, y + top, bw, h - top, BLUE)
+            for wx in (bx + 5, bx + 17):
+                for wy in range(top + 5, h - 6, 9):
+                    c.rect(x + wx, y + wy, 4, 4, GOLD)
+        c.vline(x + 125, y + 4, 8, WHITE, 1)
+        c.poly([(x + 125, y + 4), (x + 139, y + 7), (x + 125, y + 10)], RED)
+        c.line(x + 10, y + h - 8, x + w - 12, y + 10, RED, 4)
+        c.line(x + w - 12, y + 10, x + w - 34, y + 10, RED, 4)
+        c.line(x + w - 12, y + 10, x + w - 20, y + 30, RED, 4)
+        c.text("+31%", x + 12, y + 3, 2, WHITE)
+        c.chip("CONFIRMED - REUTERS", x + 6, y + h - 13)
+    else:
+        # EU sanctions: EU blue, a ring of gold stars, a white document
+        # stamped 22ND with a red seal.
+        c.rect(x, y, w, h, BLUE)
+        cx, cy = x + 52, y + h // 2 - 2
+        c.ring(cx, cy, 24, GOLD, 2, BLUE)
+        for k in range(12):
+            ang = math.radians(k * 30)
+            sx = cx + int(15 * math.cos(ang))
+            sy = cy + int(15 * math.sin(ang))
+            c.circle(sx, sy, 2, GOLD)
+        c.line(x + 80, cy, x + 118, cy, WHITE, 3)
+        c.line(x + 118, cy, x + 108, cy - 6, WHITE, 3)
+        c.line(x + 118, cy, x + 108, cy + 6, WHITE, 3)
+        c.rect(x + 126, y + 8, 104, h - 16, WHITE)
+        c.box(x + 126, y + 8, 104, h - 16, INK, 2)
+        c.text("22ND", x + 140, y + 14, 2, RED)
+        c.hline(x + 136, y + 34, 64, GREY, 1)
+        c.hline(x + 136, y + 41, 48, GREY, 1)
+        c.ring(x + 206, y + h - 18, 8, RED, 2, WHITE)
+        c.circle(x + 206, y + h - 18, 2, GOLD)
+        c.text("SANCTIONS", x + 240, y + 18, 1, WHITE)
+        c.text("PACKAGE", x + 240, y + 30, 1, WHITE)
+        c.chip("CONFIRMED - REUTERS", x + 6, y + h - 13)
 
 
-def draw_lead2(c, x, y, w):
-    """Wall Street surges: a fuller skyline with lit windows, a flag on
-    the tallest tower, and a bold red arrow climbing past it, +31%."""
-    c.hline(x, y + 46, w, GREY, 1)
-    # skyline, six buildings of rising and falling height
-    builds = [(6, 26, 26), (36, 18, 26), (66, 28, 26),
-              (96, 10, 26), (126, 20, 26), (156, 30, 24)]
-    for bx, top, bw in builds:
-        c.rect(x + bx, y + top, bw, 46 - top, BLUE)
-        for wx in (bx + 5, bx + 15):
-            if wx + 4 > bx + bw - 3:
-                continue
-            for wy in range(top + 5, 42, 9):
-                c.rect(x + wx, y + wy, 4, 4, LIGHT)
-    # flag on the tallest tower
-    c.vline(x + 109, y + 2, 8, INK, 1)
-    c.poly([(x + 109, y + 2), (x + 121, y + 5), (x + 109, y + 8)], RED)
-    # bold rising arrow over the skyline
-    c.line(x + 6, y + 44, x + 300, y + 6, RED, 4)
-    c.line(x + 300, y + 6, x + 280, y + 6, RED, 4)
-    c.line(x + 300, y + 6, x + 294, y + 24, RED, 4)
-    c.text("+31%", x + 222, y + 28, 2, RED)
+# ---------------------------------------------------------------- featured scenes
+# Small coloured scene strips, one per featured story, 24 px tall.
+# Each has a filled background, a few drawn elements, and a small
+# white label box naming the scene.
 
-
-def draw_lead3(c, x, y, w):
-    """EU sanctions package: a gold-rimmed circle of stars, an arrow to
-    a layered document with a red seal, 22ND clear."""
-    # EU circle of stars with a gold rim
-    cx, cy = x + 40, y + 24
-    c.ring(cx, cy, 22, GOLD, 2, BLUE)
-    for k in range(12):
-        ang = math.radians(k * 30)
-        sx = cx + int(13 * math.cos(ang))
-        sy = cy + int(13 * math.sin(ang))
-        c.circle(sx, sy, 2, GOLD)
-    # arrow from the circle to the document
-    c.line(x + 64, y + 24, x + 104, y + 24, BLUE, 3)
-    c.line(x + 104, y + 24, x + 94, y + 18, BLUE, 3)
-    c.line(x + 104, y + 24, x + 94, y + 30, BLUE, 3)
-    # layered document: back sheet offset, front sheet with seal
-    c.rect(x + 120, y + 8, 92, 40, WHITE)
-    c.box(x + 120, y + 8, 92, 40, GREY, 1)
-    c.rect(x + 112, y + 4, 92, 40, WHITE)
-    c.box(x + 112, y + 4, 92, 40, INK, 2)
-    c.text("22ND", x + 128, y + 10, 2, RED)
-    c.hline(x + 122, y + 28, 56, GREY, 1)
-    c.hline(x + 122, y + 34, 44, GREY, 1)
-    # red seal with a gold centre on the document
-    c.ring(x + 186, y + 38, 7, RED, 2, WHITE)
-    c.circle(x + 186, y + 38, 2, GOLD)
-    # caption
-    c.text("SANCTIONS", x + 216, y + 18, 1, INK)
-    c.text("PACKAGE", x + 216, y + 30, 1, INK)
+def draw_feat_scene(c, idx, x, y, w, h):
+    c.box(x, y, w, h, INK, 1)
+    ix, iy, iw, ih = x + 1, y + 1, w - 2, h - 2
+    if idx == 0:
+        # Benghazi ship: dark sea, a grey corvette, an orange blast.
+        c.rect(ix, iy, iw, ih, (10, 40, 90))
+        c.rect(ix + 60, iy + 12, 130, 6, (150, 150, 150))
+        c.rect(ix + 110, iy + 6, 6, 6, (150, 150, 150))
+        c.line(ix + 113, iy + 6, ix + 113, iy + 1, (150, 150, 150), 1)
+        c.circle(ix + 220, iy + 7, 4, (255, 170, 40))
+        c.line(ix + 220, iy + 1, ix + 220, iy + 13, (255, 170, 40), 1)
+        c.line(ix + 214, iy + 7, ix + 226, iy + 7, (255, 170, 40), 1)
+        c.hline(ix, iy + 19, iw, (120, 170, 220), 1)
+    elif idx == 1:
+        # Kyiv drone night: dark sky, building silhouettes, orange bursts.
+        c.rect(ix, iy, iw, ih, (12, 18, 48))
+        for bx, bh in ((20, 12), (70, 16), (130, 10), (190, 14)):
+            c.rect(ix + bx, iy + ih - bh, 44, bh, (60, 60, 80))
+            c.rect(ix + bx + 8, iy + ih - bh + 4, 4, 4, GOLD)
+            c.rect(ix + bx + 28, iy + ih - bh + 4, 4, 4, GOLD)
+        for bx, by in ((250, 6), (330, 9), (400, 5)):
+            c.circle(ix + bx, iy + by, 3, (255, 170, 40))
+            c.line(ix + bx - 5, iy + by, ix + bx + 5, iy + by,
+                   (255, 170, 40), 1)
+            c.line(ix + bx, iy + by - 5, ix + bx, iy + by + 5,
+                   (255, 170, 40), 1)
+    elif idx == 2:
+        # Hormuz strait: blue sea, a warship, a red flag, white waves.
+        c.rect(ix, iy, iw, ih, SEA)
+        c.rect(ix + 70, iy + 9, 170, 9, (140, 140, 140))
+        c.rect(ix + 120, iy + 4, 40, 5, (140, 140, 140))
+        c.rect(ix + 150, iy + 1, 5, 4, (140, 140, 140))
+        c.poly([(ix + 155, iy + 1), (ix + 173, iy + 4), (ix + 155, iy + 7)],
+               RED)
+        c.hline(ix, iy + 19, iw, WHITE, 1)
+        c.hline(ix + 40, iy + 16, 60, WHITE, 1)
+        c.hline(ix + 300, iy + 16, 80, WHITE, 1)
+    elif idx == 3:
+        # India-Nepal: pale sky, sun, grey mountains, green valley.
+        c.rect(ix, iy, iw, ih, SKY)
+        c.circle(ix + 420, iy + 6, 5, GOLD)
+        c.poly([(ix + 20, iy + ih), (ix + 90, iy + 3), (ix + 160, iy + ih)],
+               (120, 110, 100))
+        c.poly([(ix + 130, iy + ih), (ix + 210, iy + 7), (ix + 290, iy + ih)],
+               (90, 85, 80))
+        c.rect(ix, iy + ih - 4, iw, 4, GREEN)
+    elif idx == 4:
+        # London court: light stone, columns, a red seal, flags.
+        c.rect(ix, iy, iw, ih, LIGHT)
+        for bx in (60, 120, 180):
+            c.rect(ix + bx, iy + 5, 10, ih - 5, (160, 150, 130))
+        c.rect(ix + 40, iy + 3, 170, 3, INK)
+        c.ring(ix + 260, iy + 11, 6, RED, 2, WHITE)
+        c.rect(ix + 330, iy + 4, 4, ih - 4, INK)
+        c.rect(ix + 334, iy + 4, 34, 10, BLUE)
+        c.hline(ix + 334, iy + 8, 34, WHITE, 2)
+        c.rect(ix + 400, iy + 4, 4, ih - 4, INK)
+        c.rect(ix + 404, iy + 4, 34, 10, RED)
+    elif idx == 5:
+        # Washington Capitol: pale sky, white dome and columns, a flag.
+        c.rect(ix, iy, iw, ih, (230, 235, 245))
+        c.circle(ix + 90, iy + 9, 10, WHITE)
+        c.rect(ix + 76, iy + 9, 28, 5, WHITE)
+        for bx in (60, 76, 92, 108):
+            c.rect(ix + bx, iy + 14, 5, ih - 14, WHITE)
+        c.rect(ix + 50, iy + 3, 4, 10, INK)
+        c.poly([(ix + 54, iy + 3), (ix + 68, iy + 6), (ix + 54, iy + 9)],
+               RED)
+        c.rect(ix + 200, iy + 12, 120, 3, (150, 140, 120))
+        c.rect(ix + 360, iy + 8, 60, 4, BLUE)
+        c.rect(ix + 360, iy + 12, 60, 4, RED)
+    elif idx == 6:
+        # Football: green pitch, white lines, a ball.
+        c.rect(ix, iy, iw, ih, PITCH)
+        c.hline(ix, iy + ih // 2, iw, WHITE, 1)
+        c.circle(ix + iw // 2, iy + ih // 2, 7, WHITE)
+        c.circle(ix + iw // 2, iy + ih // 2, 5, PITCH)
+        c.rect(ix, iy, 60, ih, PITCH)
+        c.box(ix, iy + 3, 40, ih - 6, WHITE, 1)
+        c.circle(ix + 420, iy + 11, 6, WHITE)
+        c.circle(ix + 418, iy + 9, 1, INK)
+        c.circle(ix + 422, iy + 13, 1, INK)
+    elif idx == 7:
+        # Melbourne music: dark stage, a microphone, a gold music note.
+        c.rect(ix, iy, iw, ih, (40, 20, 60))
+        c.circle(ix + 90, iy + 8, 6, (200, 200, 200))
+        c.line(ix + 90, iy + 14, ix + 90, iy + ih - 2, (200, 200, 200), 2)
+        c.circle(ix + 200, iy + 15, 4, GOLD)
+        c.line(ix + 204, iy + 15, ix + 204, iy + 3, GOLD, 2)
+        c.line(ix + 204, iy + 3, ix + 216, iy + 6, GOLD, 2)
+        c.circle(ix + 216, iy + 15, 4, GOLD)
+        c.line(ix + 220, iy + 15, ix + 220, iy + 3, GOLD, 2)
+        c.circle(ix + 330, iy + 8, 3, GOLD)
+        c.circle(ix + 360, iy + 8, 3, GOLD)
+    elif idx == 8:
+        # Nikkei: white board, a red line falling, a red down arrow.
+        c.rect(ix, iy, iw, ih, WHITE)
+        c.line(ix + 20, iy + 4, ix + 160, iy + 8, RED, 2)
+        c.line(ix + 160, iy + 8, ix + 300, iy + 18, RED, 2)
+        c.line(ix + 300, iy + 18, ix + 440, iy + 19, RED, 2)
+        c.line(ix + 440, iy + 19, ix + 430, iy + 12, RED, 2)
+        c.line(ix + 440, iy + 19, ix + 448, iy + 12, RED, 2)
+        c.text("-5%", ix + 250, iy + 2, 1, RED)
+    else:
+        # Chip blacklist: dark bench, a blue chip, a red BAN stamp.
+        c.rect(ix, iy, iw, ih, (40, 40, 40))
+        c.rect(ix + 80, iy + 5, 30, 14, BLUE)
+        for px in (ix + 88, ix + 96, ix + 104):
+            c.vline(px, iy + 2, 3, BLUE, 2)
+            c.vline(px, iy + 19, 3, BLUE, 2)
+        c.text("NV", ix + 88, iy + 9, 1, WHITE)
+        c.rect(ix + 220, iy + 4, 70, 15, (40, 40, 40))
+        c.box(ix + 220, iy + 4, 70, 15, RED, 2)
+        c.text("BAN", ix + 242, iy + 8, 1, RED)
+        c.line(ix + 180, iy + 12, ix + 210, iy + 12, GREY, 1)
+        c.line(ix + 300, iy + 12, ix + 330, iy + 12, GREY, 1)
+    # white label box at the right end of the strip
+    label = FEATURED[idx][3]
+    lw = text_width(label, 1) + 8
+    c.rect(x + w - lw - 4, y + 3, lw, 11, WHITE)
+    c.box(x + w - lw - 4, y + 3, lw, 11, INK, 1)
+    c.text(label, x + w - lw, y + 5, 1, INK)
 
 
 # Stylized world map: simplified continent polygons in a 984x64 box.
@@ -449,21 +616,21 @@ MAP_CONTINENTS = [
 ]
 MAP_ISLANDS = [(800, 42), (815, 44), (830, 42), (860, 18), (868, 22),
                (878, 28), (948, 50), (955, 56)]
-# (u, v, label, label_x, label_y) - marker dots + labels
+# (u, v, story number, label, label_x, label_y) - numbered red pins
 MAP_MARKERS = [
-    (78, 26, "NVIDIA", 57, 14),
-    (212, 22, "WALL ST", 220, 19),
-    (478, 16, "EU", 470, 4),
-    (538, 12, "KYIV", 546, 8),
-    (640, 10, "RUSSIA", 622, 20),
-    (608, 30, "IRAN", 588, 40),
-    (688, 34, "NEPAL", 670, 44),
-    (734, 36, "MYANMAR", 712, 46),
+    (78, 26, "1", "NVIDIA", 52, 12),
+    (212, 22, "2", "WALL ST", 222, 18),
+    (478, 16, "6", "EU", 468, 4),
+    (538, 12, "8", "KYIV", 548, 8),
+    (608, 30, "12", "IRAN", 586, 40),
+    (688, 34, "14", "NEPAL", 668, 44),
+    (734, 36, "18", "MYANMAR", 712, 46),
+    (868, 50, "32", "MELBOURNE", 828, 58),
 ]
 
 
 def draw_world_map(c, x, y, w, h):
-    """Stylized continents + red markers where the big stories happened."""
+    """Stylized continents + numbered red pins matching story numbers."""
     sx = w / 984.0
     sy = h / 64.0
     for poly in MAP_CONTINENTS:
@@ -472,9 +639,12 @@ def draw_world_map(c, x, y, w, h):
         c.polyline(pts, BLUE, 1)
     for u, v in MAP_ISLANDS:
         c.ring(x + int(u * sx), y + int(v * sy), 3, BLUE, 1, MAPFILL)
-    for u, v, label, lx, ly in MAP_MARKERS:
+    for u, v, num, label, lx, ly in MAP_MARKERS:
         mx, my = x + int(u * sx), y + int(v * sy)
-        c.circle(mx, my, 3, RED)
+        c.circle(mx, my, 7, RED)
+        c.circle(mx, my, 6, RED)
+        nx = mx - text_width(num, 1) // 2
+        c.text(num, nx, my - 3, 1, WHITE)
         c.text(label, x + int(lx * sx), y + int(ly * sy), 1, INK)
 
 
@@ -483,126 +653,149 @@ def draw(c):
     MX = 20                      # side margin
     CW = W - 2 * MX              # content width: 984
 
-    # ---- masthead
-    y = 14
-    c.text_center("THE WORLD IN ONE DAY", W // 2, y, 4, INK)
-    y += 4 * 7 + 8
-    c.hline(MX, y, CW, INK, 3)
-    y += 9
-    c.text_center("MONDAY 23 NOVEMBER 2026", W // 2, y, 2, RED)
-    y += 2 * 7 + 10
-    c.hline(MX, y, CW, INK, 1)
+    # ---- masthead: small red top line, then the huge date
+    y = 8
+    c.text_center("THE WORLD IN ONE DAY - 52 STORIES - 6 REGIONS - "
+                  "EVERY ONE DATED 23 NOVEMBER 2026",
+                  W // 2, y, 1, RED)
+    y += 10
+    c.text_center("Monday 23 November 2026", W // 2, y, 4, INK)
+    y += 4 * 7 + 4
+    c.text_center("NVIDIA RETURNS - WALL STREET SURGES - "
+                  "EU SANCTIONS RUSSIA",
+                  W // 2, y, 1, INK)
+    y += 10
+    c.hline(MX, y, CW, INK, 2)
+    y += 5
 
-    # ---- stat strip
-    y += 8
-    c.rect(MX, y, CW, 22, INK)
-    c.text_center("52 STORIES  -  10 OUTLETS  -  ONE DAY  -  "
-                  "MARKETS, WAR, POLITICS, CULTURE, SPORT",
-                  W // 2, y + 4, 2, WHITE)
-    y += 22 + 8
+    # ---- THE DAY IN NUMBERS: black bar, six big red numbers
+    c.text("THE DAY IN NUMBERS", MX, y, 1, RED)
+    y += 10
+    bar_h = 36
+    c.rect(MX, y, CW, bar_h, INK)
+    cell_w = CW // 6
+    for i, (num, cap) in enumerate(NUMBERS):
+        cx = MX + i * cell_w
+        assert text_width(cap, 1) <= cell_w - 8, "number caption too long"
+        c.text_center(num, cx + cell_w // 2, y + 3, 3, RED)
+        c.text_center(cap, cx + cell_w // 2, y + 24, 1, WHITE)
+        if i:
+            c.vline(cx, y + 3, bar_h - 6, GREY, 1)
+    y += bar_h + 4
 
-    # ---- leads: three columns
+    # ---- region bar: six coloured cells with story counts (total 52)
+    reg_h = 14
+    for i, (label, color) in enumerate(REGIONS):
+        cx = MX + i * cell_w
+        c.rect(cx, y, cell_w, reg_h, color)
+        c.text_center(label, cx + cell_w // 2, y + 3, 1, WHITE)
+    y += reg_h + 4
+
+    # ---- leads: three columns, tall coloured scene + bold headline
+    c.text("TOP STORIES", MX, y, 2, RED)
+    y += 15
     lead_top = y
     col_w = (CW - 2 * 16) // 3
+    scene_h = 52
     lead_bottom = lead_top
     for i, (head, body) in enumerate(LEADS):
         x = MX + i * (col_w + 16)
         cy = lead_top
+        draw_lead_scene(c, i, x, cy, col_w, scene_h)
+        cy += scene_h + 5
         c.text("LEAD %d" % (i + 1), x, cy, 1, RED)
         cy += 12
         hl = wrap(head, col_w, 2)
+        assert len(hl) <= 3, "lead headline too long: %r" % head
         for line in hl:
-            c.text(line, x, cy, 2, INK)
-            cy += 18
+            c.bold_text(line, x, cy, 2, INK)
+            cy += 16
         cy += 2
         c.hline(x, cy, col_w, RED, 2)
-        cy += 8
-        for line in wrap(body, col_w, 1):
+        cy += 5
+        bl = wrap(body, col_w, 1)
+        assert len(bl) <= 2, "lead body too long: %r" % body
+        for line in bl:
             c.text(line, x, cy, 1, INK)
-            cy += 11
-        # Hand-drawn illustration for the lead story (48 px tall).
-        cy += 4
-        if i == 0:
-            draw_lead1(c, x, cy, col_w)
-        elif i == 1:
-            draw_lead2(c, x, cy, col_w)
-        else:
-            draw_lead3(c, x, cy, col_w)
-        cy += 48
+            cy += 10
         lead_bottom = max(lead_bottom, cy)
     # vertical dividers between lead columns
     for i in (1, 2):
         dx = MX + i * (col_w + 16) - 8
         c.vline(dx, lead_top, lead_bottom - lead_top, GREY, 1)
-    y = lead_bottom + 6
+    y = lead_bottom + 4
     c.hline(MX, y, CW, INK, 2)
-    y += 6
+    y += 5
 
-    # ---- featured: two columns, five rows each
-    c.text("FEATURED", MX, y, 2, RED)
-    y += 18
+    # ---- featured: two columns, five rows, each with a scene strip
+    c.text("MORE FROM THE DAY", MX, y, 2, RED)
+    y += 15
     feat_top = y
     fcol_w = (CW - 16) // 2
-    row_h = 58
-    for idx, (head, body) in enumerate(FEATURED):
+    row_h = 75
+    for idx, (kicker, head, body, _label) in enumerate(FEATURED):
         col = idx % 2
         row = idx // 2
         x = MX + col * (fcol_w + 16)
         cy = feat_top + row * row_h
+        draw_feat_scene(c, idx, x, cy, fcol_w, 22)
+        cy += 22 + 2
+        c.text(kicker, x, cy, 1, RED)
+        cy += 9
         hl = wrap(head, fcol_w, 2)
         assert len(hl) <= 2, "featured headline too long: %r" % head
         for line in hl:
-            c.text(line, x, cy, 2, INK)
-            cy += 18
-        bl = wrap(body, fcol_w, 1)
-        assert len(bl) <= 2, "featured body too long: %r" % body
-        for line in bl:
-            c.text(line, x, cy, 1, GREY)
-            cy += 11
+            c.bold_text(line, x, cy, 2, INK)
+            cy += 16
+        assert text_width(body, 1) <= fcol_w, "featured body too long"
+        c.text(body, x, cy, 1, GREY)
+        cy += 11
     y = feat_top + 5 * row_h + 2
     c.hline(MX, y, CW, INK, 2)
-    y += 6
+    y += 5
 
-    # ---- ALSO list: two columns, one line per story
+    # ---- ALSO list: three columns, one line per story (39 lines)
     c.text("ALSO IN THE NEWS - 23 NOVEMBER", MX, y, 2, RED)
-    y += 18
+    y += 15
     also_top = y
-    acol_w = (CW - 16) // 2
-    left = ALSO[:20]
-    right = ALSO[20:]
+    acol_w = (CW - 2 * 10) // 3
     for line in ALSO:
         assert text_width(line, 1) <= acol_w, "ALSO line too long: %r" % line
-    for i, line in enumerate(left):
-        c.text(line, MX, also_top + i * 9, 1, INK)
-    for i, line in enumerate(right):
-        c.text(line, MX + acol_w + 16, also_top + i * 9, 1, INK)
-    y = also_top + 20 * 9 + 4
+    for col in range(3):
+        part = ALSO[col * 13:(col + 1) * 13]
+        ax = MX + col * (acol_w + 10)
+        for i, line in enumerate(part):
+            c.text(line, ax, also_top + i * 8, 1, INK)
+    y = also_top + 13 * 8 + 4
     c.hline(MX, y, CW, INK, 2)
-    y += 6
+    y += 5
 
-    # ---- world map: stylized continents + markers for the big stories
+    # ---- world map: big, full width, numbered pins
     c.text("WORLD MAP - WHERE THE NEWS HAPPENED", MX, y, 1, RED)
-    y += 11
-    draw_world_map(c, MX, y, CW, 66)
-    y += 66 + 6
+    c.text("EACH NUMBER MATCHES A STORY ON THIS PAGE",
+           MX + CW - text_width("EACH NUMBER MATCHES A STORY ON THIS PAGE", 1),
+           y, 1, GREY)
+    y += 10
+    draw_world_map(c, MX, y, CW, 72)
+    y += 72 + 4
     c.hline(MX, y, CW, INK, 2)
-    y += 6
+    y += 5
 
     # ---- DATE CHECK box
-    box_h = 66
+    box_h = 54
     c.box(MX, y, CW, box_h, INK, 2)
-    c.text("DATE CHECK - 23 NOVEMBER 2026 ONLY", MX + 12, y + 8, 2, RED)
-    by = y + 30
+    c.text("DATE CHECK - 23 NOVEMBER 2026 ONLY", MX + 12, y + 7, 2, RED)
+    by = y + 25
     for line in wrap(DATE_CHECK, CW - 24, 1):
         c.text(line, MX + 12, by, 1, INK)
-        by += 11
-    y += box_h + 6
+        by += 10
+    y += box_h + 5
 
     # ---- sources + footer
     c.text_center(SOURCES, W // 2, y, 1, INK)
-    y += 10
+    y += 9
     c.hline(MX, y, CW, GREY, 1)
-    y += 6
+    y += 5
     c.text_center("ALL 52 STORIES VERIFIED AGAINST THE NAMED SOURCE - "
                   "MONDAY 23 NOVEMBER 2026", W // 2, y, 1, GREY)
     y += 11

@@ -8,16 +8,18 @@ https://make.fun/bounty/news-image-20261123
 
 One image summing up the world's news of Monday 23 November 2026.
 
-52 stories, all dated Monday 23 November 2026: 3 leads, 10 featured
-stories and 39 more in the ALSO list, with a DATE CHECK box listing the
-big 20–22 November stories left out on purpose, and every story carrying
-its source on the image.
+52 stories, all dated Monday 23 November 2026: 3 leads with tall
+coloured scene panels, 10 featured stories each with its own coloured
+scene strip, a THE DAY IN NUMBERS strip, a region bar, 39 more in the
+ALSO list, a big world map with numbered pins, and a DATE CHECK box
+listing the big 20–22 November stories left out on purpose, with
+every story carrying its source on the image.
 
 Written from scratch in this session. Pure Python standard library only
-(hand-drawn 5×7 bitmap font, hand-rolled PNG encoder), no network,
+(stroke-based vector font, hand-rolled PNG encoder), no network,
 no randomness.
 
-Run `python3 main.py` to render `entry.png` (1024×1024, 41,079 bytes,
+Run `python3 main.py` to render `entry.png` (1024×1024, 53,773 bytes,
 byte-identical on every run — verified two consecutive runs produce
 the same SHA-256).
 
