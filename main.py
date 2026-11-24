@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""The World in One Day - Monday 23 November 2026 (v5).
+"""The World in One Day - Monday 23 November 2026 (v7).
 
 A program that draws one front-page image summing up 23 November 2026
 world news: 52 verified stories, every one carrying its source.
 
-v6 revision of the v5 front page (same 52 verified stories, same
-layout, no story added or changed): the whole page is now rendered
-with 2x supersampling anti-aliasing - drawn at 2048x2048 and
-box-downsampled to 1024x1024 - so the hand-drawn stroke text renders
-visibly smoother instead of jagged and stair-stepped. Everything else
-is the v5 layout unchanged: a huge date, a THE DAY IN NUMBERS strip,
-a region bar, three leads with tall coloured scene panels and caption
-chips, ten featured stories each with its own small coloured scene
-strip, bold headlines, a three-column ALSO list, and a big world map
-with numbered pins.
+v7 revision of the v6 front page (same 52 verified stories, same
+layout, no story added or changed): the ten featured stories now get
+proper tall illustrated scene panels (40 px, detailed scenes) instead
+of the thin 22 px strips, which read as bands, not illustrations.
+The 2x supersampling anti-aliasing from v6 is kept, so the hand-drawn
+stroke text stays smooth. Everything else is unchanged: a huge date,
+a THE DAY IN NUMBERS strip, a region bar, three leads with tall
+coloured scene panels and caption chips, bold headlines, a
+three-column ALSO list, and a big world map with numbered pins.
 
 Pure Python standard library only. Stroke-based vector font (sfont.py),
 hand-rolled PNG encoder, no network, no randomness, deterministic output.
@@ -535,133 +534,193 @@ def draw_lead_scene(c, i, x, y, w, h):
 
 
 # ---------------------------------------------------------------- featured scenes
-# Small coloured scene strips, one per featured story, 24 px tall.
-# Each has a filled background, a few drawn elements, and a small
-# white label box naming the scene.
+# Tall coloured scene panels, one per featured story, 40 px tall.
+# Each has a filled background, large recognizable drawn elements
+# that fill the panel, and a small white label box naming the scene.
+# (v7: the v6 strips were only 22 px tall and read as thin bands,
+# not illustrations; the panels are now 40 px with detailed scenes.
+# The white label box sits at the top right, so scene elements keep
+# clear of the top-right ~90 px in the top 14 px.)
 
 def draw_feat_scene(c, idx, x, y, w, h):
     c.box(x, y, w, h, INK, 1)
     ix, iy, iw, ih = x + 1, y + 1, w - 2, h - 2
     if idx == 0:
-        # Benghazi ship: dark sea, a grey corvette, an orange blast.
+        # Benghazi ship: dark sea, a big grey corvette, an orange blast.
         c.rect(ix, iy, iw, ih, (10, 40, 90))
-        c.rect(ix + 60, iy + 12, 130, 6, (150, 150, 150))
-        c.rect(ix + 110, iy + 6, 6, 6, (150, 150, 150))
-        c.line(ix + 113, iy + 6, ix + 113, iy + 1, (150, 150, 150), 1)
-        c.circle(ix + 220, iy + 7, 4, (255, 170, 40))
-        c.line(ix + 220, iy + 1, ix + 220, iy + 13, (255, 170, 40), 1)
-        c.line(ix + 214, iy + 7, ix + 226, iy + 7, (255, 170, 40), 1)
-        c.hline(ix, iy + 19, iw, (120, 170, 220), 1)
+        c.poly([(ix + 30, iy + 30), (ix + 40, iy + 20), (ix + 220, iy + 20),
+                (ix + 230, iy + 30)], (150, 150, 150))
+        c.rect(ix + 60, iy + 12, 90, 8, (150, 150, 150))
+        c.rect(ix + 110, iy + 4, 6, 8, (150, 150, 150))
+        c.line(ix + 113, iy + 4, ix + 113, iy + 1, (255, 255, 255), 1)
+        c.rect(ix + 160, iy + 8, 14, 12, (120, 120, 120))
+        c.rect(ix + 70, iy + 22, 8, 6, (60, 60, 60))
+        c.rect(ix + 120, iy + 22, 8, 6, (60, 60, 60))
+        c.rect(ix + 180, iy + 22, 8, 6, (60, 60, 60))
+        c.circle(ix + 300, iy + 14, 10, (255, 170, 40))
+        c.circle(ix + 300, iy + 14, 5, (255, 220, 100))
+        for dx, dy in ((-14, 0), (14, 0), (0, -14), (0, 14),
+                       (-10, -10), (10, -10), (-10, 10), (10, 10)):
+            c.line(ix + 300, iy + 14, ix + 300 + dx, iy + 14 + dy,
+                   (255, 170, 40), 1)
+        c.rect(ix + 370, iy + 6, 12, 3, (200, 200, 200))
+        c.line(ix + 368, iy + 5, ix + 384, iy + 5, (200, 200, 200), 1)
+        c.line(ix + 376, iy + 9, ix + 376, iy + 13, (200, 200, 200), 1)
+        c.hline(ix, iy + 34, iw, (120, 170, 220), 1)
+        c.hline(ix + 40, iy + 36, 80, (120, 170, 220), 1)
+        c.hline(ix + 300, iy + 36, 100, (120, 170, 220), 1)
     elif idx == 1:
-        # Kyiv drone night: dark sky, building silhouettes, orange bursts.
+        # Kyiv drone night: dark sky, tall buildings, orange bursts.
         c.rect(ix, iy, iw, ih, (12, 18, 48))
-        for bx, bh in ((20, 12), (70, 16), (130, 10), (190, 14)):
-            c.rect(ix + bx, iy + ih - bh, 44, bh, (60, 60, 80))
-            c.rect(ix + bx + 8, iy + ih - bh + 4, 4, 4, GOLD)
-            c.rect(ix + bx + 28, iy + ih - bh + 4, 4, 4, GOLD)
-        for bx, by in ((250, 6), (330, 9), (400, 5)):
-            c.circle(ix + bx, iy + by, 3, (255, 170, 40))
-            c.line(ix + bx - 5, iy + by, ix + bx + 5, iy + by,
+        for bx, bh in ((20, 26), (90, 32), (170, 22), (250, 28)):
+            c.rect(ix + bx, iy + ih - bh, 56, bh, (60, 60, 80))
+            for wy in range(iy + ih - bh + 5, iy + ih - 4, 8):
+                c.rect(ix + bx + 8, wy, 5, 5, GOLD)
+                c.rect(ix + bx + 34, wy, 5, 5, GOLD)
+        for bx, by in ((330, 12), (390, 18)):
+            c.circle(ix + bx, iy + by, 8, (255, 170, 40))
+            c.circle(ix + bx, iy + by, 4, (255, 220, 100))
+            c.line(ix + bx - 12, iy + by, ix + bx + 12, iy + by,
                    (255, 170, 40), 1)
-            c.line(ix + bx, iy + by - 5, ix + bx, iy + by + 5,
+            c.line(ix + bx, iy + by - 12, ix + bx, iy + by + 12,
                    (255, 170, 40), 1)
+        c.rect(ix + 60, iy + 6, 12, 3, (200, 200, 200))
+        c.line(ix + 58, iy + 5, ix + 74, iy + 5, (200, 200, 200), 1)
     elif idx == 2:
-        # Hormuz strait: blue sea, a warship, a red flag, white waves.
+        # Hormuz strait: blue sea, a big warship, a red flag, waves.
         c.rect(ix, iy, iw, ih, SEA)
-        c.rect(ix + 70, iy + 9, 170, 9, (140, 140, 140))
-        c.rect(ix + 120, iy + 4, 40, 5, (140, 140, 140))
-        c.rect(ix + 150, iy + 1, 5, 4, (140, 140, 140))
-        c.poly([(ix + 155, iy + 1), (ix + 173, iy + 4), (ix + 155, iy + 7)],
+        c.poly([(ix + 40, iy + 30), (ix + 52, iy + 18), (ix + 280, iy + 18),
+                (ix + 292, iy + 30)], (140, 140, 140))
+        c.rect(ix + 90, iy + 10, 120, 8, (140, 140, 140))
+        c.rect(ix + 130, iy + 4, 5, 6, (140, 140, 140))
+        c.poly([(ix + 135, iy + 4), (ix + 155, iy + 7), (ix + 135, iy + 10)],
                RED)
-        c.hline(ix, iy + 19, iw, WHITE, 1)
-        c.hline(ix + 40, iy + 16, 60, WHITE, 1)
-        c.hline(ix + 300, iy + 16, 80, WHITE, 1)
+        c.rect(ix + 220, iy + 12, 20, 6, (100, 100, 100))
+        c.hline(ix, iy + 34, iw, WHITE, 1)
+        c.hline(ix + 30, iy + 36, 70, WHITE, 1)
+        c.hline(ix + 320, iy + 36, 90, WHITE, 1)
+        c.hline(ix + 340, iy + 32, 50, WHITE, 1)
     elif idx == 3:
-        # India-Nepal: pale sky, sun, grey mountains, green valley.
+        # India-Nepal: pale sky, sun, big mountains, green valley.
         c.rect(ix, iy, iw, ih, SKY)
-        c.circle(ix + 420, iy + 6, 5, GOLD)
-        c.poly([(ix + 20, iy + ih), (ix + 90, iy + 3), (ix + 160, iy + ih)],
+        c.circle(ix + 360, iy + 9, 7, GOLD)
+        c.circle(ix + 360, iy + 9, 4, (255, 240, 150))
+        c.poly([(ix + 10, iy + ih), (ix + 100, iy + 4), (ix + 190, iy + ih)],
                (120, 110, 100))
-        c.poly([(ix + 130, iy + ih), (ix + 210, iy + 7), (ix + 290, iy + ih)],
+        c.poly([(ix + 80, iy + 12), (ix + 100, iy + 4), (ix + 120, iy + 12)],
+               WHITE)
+        c.poly([(ix + 150, iy + ih), (ix + 250, iy + 8), (ix + 350, iy + ih)],
                (90, 85, 80))
-        c.rect(ix, iy + ih - 4, iw, 4, GREEN)
-    elif idx == 4:
-        # London court: light stone, columns, a red seal, flags.
-        c.rect(ix, iy, iw, ih, LIGHT)
-        for bx in (60, 120, 180):
-            c.rect(ix + bx, iy + 5, 10, ih - 5, (160, 150, 130))
-        c.rect(ix + 40, iy + 3, 170, 3, INK)
-        c.ring(ix + 260, iy + 11, 6, RED, 2, WHITE)
-        c.rect(ix + 330, iy + 4, 4, ih - 4, INK)
-        c.rect(ix + 334, iy + 4, 34, 10, BLUE)
-        c.hline(ix + 334, iy + 8, 34, WHITE, 2)
-        c.rect(ix + 400, iy + 4, 4, ih - 4, INK)
-        c.rect(ix + 404, iy + 4, 34, 10, RED)
-    elif idx == 5:
-        # Washington Capitol: pale sky, white dome and columns, a flag.
-        c.rect(ix, iy, iw, ih, (230, 235, 245))
-        c.circle(ix + 90, iy + 9, 10, WHITE)
-        c.rect(ix + 76, iy + 9, 28, 5, WHITE)
-        for bx in (60, 76, 92, 108):
-            c.rect(ix + bx, iy + 14, 5, ih - 14, WHITE)
-        c.rect(ix + 50, iy + 3, 4, 10, INK)
-        c.poly([(ix + 54, iy + 3), (ix + 68, iy + 6), (ix + 54, iy + 9)],
+        c.poly([(ix + 232, iy + 15), (ix + 250, iy + 8), (ix + 268, iy + 15)],
+               WHITE)
+        c.rect(ix, iy + ih - 5, iw, 5, GREEN)
+        c.vline(ix + 250, iy + 2, 6, INK, 1)
+        c.poly([(ix + 250, iy + 2), (ix + 262, iy + 4), (ix + 250, iy + 6)],
                RED)
-        c.rect(ix + 200, iy + 12, 120, 3, (150, 140, 120))
-        c.rect(ix + 360, iy + 8, 60, 4, BLUE)
-        c.rect(ix + 360, iy + 12, 60, 4, RED)
+    elif idx == 4:
+        # London court: light stone, pediment, tall columns, red seal.
+        c.rect(ix, iy, iw, ih, LIGHT)
+        c.poly([(ix + 40, iy + 12), (ix + 140, iy + 2), (ix + 240, iy + 12)],
+               (160, 150, 130))
+        c.rect(ix + 40, iy + 12, 200, 3, INK)
+        for bx in (60, 110, 160, 210):
+            c.rect(ix + bx, iy + 15, 12, ih - 15, (160, 150, 130))
+        c.rect(ix + 40, iy + ih - 4, 200, 4, (140, 130, 110))
+        c.ring(ix + 300, iy + 18, 8, RED, 2, WHITE)
+        c.circle(ix + 300, iy + 18, 3, RED)
+        c.rect(ix + 340, iy + 6, 4, ih - 6, INK)
+        c.rect(ix + 344, iy + 6, 36, 12, BLUE)
+        c.hline(ix + 344, iy + 11, 36, WHITE, 2)
+        c.vline(ix + 360, iy + 6, 12, WHITE, 2)
+        c.rect(ix + 390, iy + 6, 4, ih - 6, INK)
+        c.rect(ix + 394, iy + 6, 36, 12, RED)
+        c.hline(ix + 394, iy + 11, 36, WHITE, 1)
+    elif idx == 5:
+        # Washington Capitol: pale sky, big white dome, columns, flag.
+        c.rect(ix, iy, iw, ih, (230, 235, 245))
+        c.circle(ix + 110, iy + 22, 18, WHITE)
+        c.rect(ix + 92, iy + 22, 36, 4, WHITE)
+        c.rect(ix + 106, iy + 2, 8, 4, WHITE)
+        c.circle(ix + 110, iy + 2, 2, GOLD)
+        c.rect(ix + 70, iy + 26, 80, 4, WHITE)
+        for bx in (76, 92, 108, 124):
+            c.rect(ix + bx, iy + 30, 6, ih - 30, WHITE)
+        c.rect(ix + 66, iy + ih - 3, 88, 3, (150, 140, 120))
+        c.rect(ix + 200, iy + 4, 4, ih - 4, INK)
+        c.poly([(ix + 204, iy + 4), (ix + 222, iy + 8), (ix + 204, iy + 12)],
+               RED)
+        c.rect(ix + 260, iy + 30, 140, 3, (150, 140, 120))
+        c.rect(ix + 300, iy + 12, 80, 4, BLUE)
+        c.rect(ix + 300, iy + 16, 80, 4, RED)
+        c.rect(ix + 300, iy + 20, 80, 4, WHITE)
     elif idx == 6:
-        # Football: green pitch, white lines, a ball.
+        # Football: green pitch, white lines, centre circle, ball.
         c.rect(ix, iy, iw, ih, PITCH)
         c.hline(ix, iy + ih // 2, iw, WHITE, 1)
-        c.circle(ix + iw // 2, iy + ih // 2, 7, WHITE)
-        c.circle(ix + iw // 2, iy + ih // 2, 5, PITCH)
-        c.rect(ix, iy, 60, ih, PITCH)
-        c.box(ix, iy + 3, 40, ih - 6, WHITE, 1)
-        c.circle(ix + 420, iy + 11, 6, WHITE)
-        c.circle(ix + 418, iy + 9, 1, INK)
-        c.circle(ix + 422, iy + 13, 1, INK)
+        c.circle(ix + iw // 2, iy + ih // 2, 12, WHITE)
+        c.circle(ix + iw // 2, iy + ih // 2, 10, PITCH)
+        c.box(ix + 8, iy + 14, 70, ih - 18, WHITE, 1)
+        c.box(ix + iw - 78, iy + 14, 70, ih - 18, WHITE, 1)
+        c.vline(ix + 8, iy, ih, WHITE, 1)
+        c.vline(ix + iw - 8, iy, ih, WHITE, 1)
+        c.circle(ix + 380, iy + 18, 8, WHITE)
+        c.circle(ix + 378, iy + 16, 2, INK)
+        c.circle(ix + 382, iy + 20, 2, INK)
+        c.circle(ix + 380, iy + 14, 1, INK)
     elif idx == 7:
-        # Melbourne music: dark stage, a microphone, a gold music note.
+        # Melbourne music: dark stage, big mic, gold notes, spotlights.
         c.rect(ix, iy, iw, ih, (40, 20, 60))
-        c.circle(ix + 90, iy + 8, 6, (200, 200, 200))
-        c.line(ix + 90, iy + 14, ix + 90, iy + ih - 2, (200, 200, 200), 2)
-        c.circle(ix + 200, iy + 15, 4, GOLD)
-        c.line(ix + 204, iy + 15, ix + 204, iy + 3, GOLD, 2)
-        c.line(ix + 204, iy + 3, ix + 216, iy + 6, GOLD, 2)
-        c.circle(ix + 216, iy + 15, 4, GOLD)
-        c.line(ix + 220, iy + 15, ix + 220, iy + 3, GOLD, 2)
-        c.circle(ix + 330, iy + 8, 3, GOLD)
-        c.circle(ix + 360, iy + 8, 3, GOLD)
+        c.line(ix + 20, iy + 2, ix + 120, iy + ih - 2, (120, 100, 160), 2)
+        c.line(ix + 410, iy + 16, ix + 342, iy + ih - 2, (120, 100, 160), 2)
+        c.circle(ix + 110, iy + 12, 9, (200, 200, 200))
+        c.circle(ix + 110, iy + 12, 6, (120, 120, 120))
+        c.line(ix + 110, iy + 21, ix + 110, iy + ih - 2, (200, 200, 200), 2)
+        c.line(ix + 100, iy + ih - 2, ix + 120, iy + ih - 2, (200, 200, 200), 2)
+        for nx in (200, 260, 330):
+            c.circle(ix + nx, iy + 28, 5, GOLD)
+            c.line(ix + nx + 5, iy + 28, ix + nx + 5, iy + 10, GOLD, 2)
+            c.line(ix + nx + 5, iy + 10, ix + nx + 16, iy + 14, GOLD, 2)
+        c.circle(ix + 380, iy + 14, 4, GOLD)
+        c.circle(ix + 410, iy + 14, 4, GOLD)
     elif idx == 8:
-        # Nikkei: white board, a red line falling, a red down arrow.
+        # Nikkei: white board, grid, red falling line, big down arrow.
         c.rect(ix, iy, iw, ih, WHITE)
-        c.line(ix + 20, iy + 4, ix + 160, iy + 8, RED, 2)
-        c.line(ix + 160, iy + 8, ix + 300, iy + 18, RED, 2)
-        c.line(ix + 300, iy + 18, ix + 440, iy + 19, RED, 2)
-        c.line(ix + 440, iy + 19, ix + 430, iy + 12, RED, 2)
-        c.line(ix + 440, iy + 19, ix + 448, iy + 12, RED, 2)
-        c.text("-5%", ix + 250, iy + 2, 1, RED)
+        for gy in range(iy + 8, iy + ih, 8):
+            c.hline(ix, gy, iw, (220, 220, 220), 1)
+        for gx in range(ix + 40, ix + iw, 60):
+            c.vline(gx, iy, ih, (220, 220, 220), 1)
+        c.line(ix + 20, iy + 4, ix + 160, iy + 10, RED, 3)
+        c.line(ix + 160, iy + 10, ix + 300, iy + 26, RED, 3)
+        c.line(ix + 300, iy + 26, ix + 420, iy + 30, RED, 3)
+        c.line(ix + 430, iy + 16, ix + 430, iy + 34, RED, 3)
+        c.line(ix + 430, iy + 34, ix + 420, iy + 24, RED, 3)
+        c.line(ix + 430, iy + 34, ix + 440, iy + 24, RED, 3)
+        c.text("-5%", ix + 250, iy + 2, 2, RED)
     else:
-        # Chip blacklist: dark bench, a blue chip, a red BAN stamp.
+        # Chip blacklist: dark bench, big blue chip, red BAN stamp.
         c.rect(ix, iy, iw, ih, (40, 40, 40))
-        c.rect(ix + 80, iy + 5, 30, 14, BLUE)
-        for px in (ix + 88, ix + 96, ix + 104):
-            c.vline(px, iy + 2, 3, BLUE, 2)
-            c.vline(px, iy + 19, 3, BLUE, 2)
-        c.text("NV", ix + 88, iy + 9, 1, WHITE)
-        c.rect(ix + 220, iy + 4, 70, 15, (40, 40, 40))
-        c.box(ix + 220, iy + 4, 70, 15, RED, 2)
-        c.text("BAN", ix + 242, iy + 8, 1, RED)
-        c.line(ix + 180, iy + 12, ix + 210, iy + 12, GREY, 1)
-        c.line(ix + 300, iy + 12, ix + 330, iy + 12, GREY, 1)
+        c.hline(ix, iy + 30, iw, GREY, 1)
+        c.hline(ix + 60, iy + 8, 120, GREY, 1)
+        c.vline(ix + 60, iy + 8, 22, GREY, 1)
+        c.rect(ix + 90, iy + 8, 60, 24, BLUE)
+        for px in (ix + 100, ix + 115, ix + 130):
+            c.vline(px, iy + 4, 4, BLUE, 2)
+            c.vline(px, iy + 32, 4, BLUE, 2)
+        for py in (iy + 14, iy + 22):
+            c.hline(ix + 86, py, 4, BLUE, 2)
+            c.hline(ix + 150, py, 4, BLUE, 2)
+        c.text("NV", ix + 112, iy + 16, 1, WHITE)
+        c.rect(ix + 220, iy + 8, 90, 22, (40, 40, 40))
+        c.box(ix + 220, iy + 8, 90, 22, RED, 2)
+        c.text("BAN", ix + 250, iy + 14, 2, RED)
+        c.rect(ix + 360, iy + 12, 30, 16, BLUE)
+        c.text("NV", ix + 368, iy + 16, 1, WHITE)
     # white label box at the right end of the strip
     label = FEATURED[idx][3]
     lw = text_width(label, 1) + 8
     c.rect(x + w - lw - 4, y + 3, lw, 11, WHITE)
     c.box(x + w - lw - 4, y + 3, lw, 11, INK, 1)
     c.text(label, x + w - lw, y + 5, 1, INK)
-
 
 # Stylized world map: simplified continent polygons in a 984x64 box.
 # Positions are relative, not a precise projection.
@@ -741,19 +800,19 @@ def draw(c):
                   "EVERY ONE DATED 23 NOVEMBER 2026",
                   W // 2, y, 1, RED)
     y += 10
-    c.text_center("Monday 23 November 2026", W // 2, y, 4, INK)
-    y += 4 * 7 + 4
+    c.text_center("Monday 23 November 2026", W // 2, y, 3, INK)
+    y += 3 * 7 + 4
     c.text_center("NVIDIA RETURNS - WALL STREET SURGES - "
                   "EU SANCTIONS RUSSIA",
                   W // 2, y, 1, INK)
     y += 10
     c.hline(MX, y, CW, INK, 2)
-    y += 5
+    y += 3
 
     # ---- THE DAY IN NUMBERS: black bar, six big red numbers
     c.text("THE DAY IN NUMBERS", MX, y, 1, RED)
     y += 10
-    bar_h = 36
+    bar_h = 32
     c.rect(MX, y, CW, bar_h, INK)
     cell_w = CW // 6
     for i, (num, cap) in enumerate(NUMBERS):
@@ -763,22 +822,22 @@ def draw(c):
         c.text_center(cap, cx + cell_w // 2, y + 24, 1, WHITE)
         if i:
             c.vline(cx, y + 3, bar_h - 6, GREY, 1)
-    y += bar_h + 4
+    y += bar_h + 3
 
     # ---- region bar: six coloured cells with story counts (total 52)
-    reg_h = 14
+    reg_h = 12
     for i, (label, color) in enumerate(REGIONS):
         cx = MX + i * cell_w
         c.rect(cx, y, cell_w, reg_h, color)
         c.text_center(label, cx + cell_w // 2, y + 3, 1, WHITE)
-    y += reg_h + 4
+    y += reg_h + 3
 
     # ---- leads: three columns, tall coloured scene + bold headline
     c.text("TOP STORIES", MX, y, 2, RED)
-    y += 15
+    y += 14
     lead_top = y
     col_w = (CW - 2 * 16) // 3
-    scene_h = 52
+    scene_h = 50
     lead_bottom = lead_top
     for i, (head, body) in enumerate(LEADS):
         x = MX + i * (col_w + 16)
@@ -805,40 +864,40 @@ def draw(c):
     for i in (1, 2):
         dx = MX + i * (col_w + 16) - 8
         c.vline(dx, lead_top, lead_bottom - lead_top, GREY, 1)
-    y = lead_bottom + 4
+    y = lead_bottom + 3
     c.hline(MX, y, CW, INK, 2)
-    y += 5
+    y += 4
 
     # ---- featured: two columns, five rows, each with a scene strip
     c.text("MORE FROM THE DAY", MX, y, 2, RED)
-    y += 15
+    y += 14
     feat_top = y
     fcol_w = (CW - 16) // 2
-    row_h = 75
+    row_h = 90
     for idx, (kicker, head, body, _label) in enumerate(FEATURED):
         col = idx % 2
         row = idx // 2
         x = MX + col * (fcol_w + 16)
         cy = feat_top + row * row_h
-        draw_feat_scene(c, idx, x, cy, fcol_w, 22)
-        cy += 22 + 2
+        draw_feat_scene(c, idx, x, cy, fcol_w, 40)
+        cy += 40 + 2
         c.text(kicker, x, cy, 1, RED)
-        cy += 9
+        cy += 8
         hl = wrap(head, fcol_w, 2)
         assert len(hl) <= 2, "featured headline too long: %r" % head
         for line in hl:
             c.bold_text(line, x, cy, 2, INK)
-            cy += 16
+            cy += 15
         assert text_width(body, 1) <= fcol_w, "featured body too long"
         c.text(body, x, cy, 1, GREY)
-        cy += 11
+        cy += 10
     y = feat_top + 5 * row_h + 2
     c.hline(MX, y, CW, INK, 2)
-    y += 5
+    y += 4
 
     # ---- ALSO list: three columns, one line per story (39 lines)
     c.text("ALSO IN THE NEWS - 23 NOVEMBER", MX, y, 2, RED)
-    y += 15
+    y += 14
     also_top = y
     acol_w = (CW - 2 * 10) // 3
     for line in ALSO:
@@ -848,9 +907,9 @@ def draw(c):
         ax = MX + col * (acol_w + 10)
         for i, line in enumerate(part):
             c.text(line, ax, also_top + i * 8, 1, INK)
-    y = also_top + 13 * 8 + 4
+    y = also_top + 13 * 8 + 3
     c.hline(MX, y, CW, INK, 2)
-    y += 5
+    y += 4
 
     # ---- world map: big, full width, numbered pins
     c.text("WORLD MAP - WHERE THE NEWS HAPPENED", MX, y, 1, RED)
@@ -858,20 +917,20 @@ def draw(c):
            MX + CW - text_width("EACH NUMBER MATCHES A STORY ON THIS PAGE", 1),
            y, 1, GREY)
     y += 10
-    draw_world_map(c, MX, y, CW, 72)
-    y += 72 + 4
+    draw_world_map(c, MX, y, CW, 44)
+    y += 44 + 3
     c.hline(MX, y, CW, INK, 2)
-    y += 5
+    y += 4
 
     # ---- DATE CHECK box
-    box_h = 54
+    box_h = 48
     c.box(MX, y, CW, box_h, INK, 2)
     c.text("DATE CHECK - 23 NOVEMBER 2026 ONLY", MX + 12, y + 7, 2, RED)
-    by = y + 25
+    by = y + 22
     for line in wrap(DATE_CHECK, CW - 24, 1):
         c.text(line, MX + 12, by, 1, INK)
-        by += 10
-    y += box_h + 5
+        by += 9
+    y += box_h + 4
 
     # ---- sources + footer
     c.text_center(SOURCES, W // 2, y, 1, INK)
