@@ -303,61 +303,86 @@ DATE_CHECK = ("EVERY STORY ON THIS PAGE HAPPENED OR WAS FIRST REPORTED ON "
 # no network. Written fresh for this revision; each scene is 48 px tall.
 
 def draw_lead1(c, x, y, w):
-    """Nvidia CEO returns: a figure walks back through an office door,
-    a red BACK arrow points in, a chip waits on the right."""
+    """Nvidia CEO returns: a richer office scene — open door, a figure
+    walking back in with a briefcase, desk with monitor, papers and a
+    chip, a wall chart, and a red BACK arrow pointing into the door."""
     c.hline(x, y + 46, w, GREY, 1)
     # open doorway, left
-    c.box(x + 8, y + 2, 36, 44, INK, 2)
-    # figure walking in through the door
-    hx, hy = x + 26, y + 14
+    c.box(x + 8, y + 2, 38, 44, INK, 2)
+    # figure walking in through the door, briefcase in hand
+    hx, hy = x + 27, y + 14
     c.circle(hx, hy, 4, INK)
     c.line(hx, hy + 5, hx, hy + 18, INK, 2)
     c.line(hx, hy + 23, hx - 7, hy + 32, INK, 2)
     c.line(hx, hy + 23, hx + 7, hy + 30, INK, 2)
     c.line(hx, hy + 10, hx - 8, hy + 15, INK, 2)
     c.line(hx, hy + 10, hx + 8, hy + 14, INK, 2)
+    c.rect(hx + 10, hy + 15, 10, 8, INK)
+    c.rect(hx + 12, hy + 17, 6, 4, PAPER)
     # red BACK arrow pointing left into the door
-    c.line(x + 262, y + 16, x + 58, y + 16, RED, 3)
-    c.line(x + 58, y + 16, x + 72, y + 9, RED, 3)
-    c.line(x + 58, y + 16, x + 72, y + 23, RED, 3)
-    c.text("BACK", x + 140, y + 4, 1, RED)
-    # chip, right
-    c.rect(x + 272, y + 22, 26, 20, BLUE)
+    c.line(x + 150, y + 26, x + 54, y + 26, RED, 3)
+    c.line(x + 54, y + 26, x + 68, y + 19, RED, 3)
+    c.line(x + 54, y + 26, x + 68, y + 33, RED, 3)
+    c.text("BACK", x + 92, y + 14, 1, RED)
+    # framed wall chart
+    c.box(x + 160, y + 4, 36, 20, INK, 1)
+    c.line(x + 164, y + 20, x + 172, y + 14, RED, 1)
+    c.line(x + 172, y + 14, x + 180, y + 16, RED, 1)
+    c.line(x + 180, y + 16, x + 188, y + 9, RED, 1)
+    # desk with papers, monitor and chip
+    c.hline(x + 150, y + 36, 162, INK, 2)
+    c.vline(x + 156, y + 36, 10, INK, 2)
+    c.vline(x + 304, y + 36, 10, INK, 2)
+    c.rect(x + 160, y + 30, 22, 6, WHITE)
+    c.hline(x + 163, y + 33, 16, GREY, 1)
+    c.rect(x + 186, y + 31, 18, 5, WHITE)
+    c.hline(x + 189, y + 33, 12, GREY, 1)
+    c.rect(x + 210, y + 20, 36, 16, INK)
+    c.rect(x + 213, y + 23, 30, 10, LIGHT)
+    c.line(x + 216, y + 31, x + 224, y + 26, RED, 1)
+    c.line(x + 224, y + 26, x + 232, y + 28, RED, 1)
+    c.line(x + 232, y + 28, x + 240, y + 24, RED, 1)
+    # chip, right, sitting on the desk
+    c.rect(x + 272, y + 20, 26, 16, BLUE)
     for px in (x + 278, x + 286, x + 294):
-        c.vline(px, y + 18, 4, BLUE, 2)
-        c.vline(px, y + 42, 4, BLUE, 2)
-    c.hline(x + 268, y + 28, 4, BLUE, 2)
-    c.hline(x + 268, y + 34, 4, BLUE, 2)
-    c.hline(x + 298, y + 28, 4, BLUE, 2)
-    c.hline(x + 298, y + 34, 4, BLUE, 2)
-    c.text("NV", x + 278, y + 29, 1, WHITE)
+        c.vline(px, y + 16, 4, BLUE, 2)
+    c.hline(x + 268, y + 26, 4, BLUE, 2)
+    c.hline(x + 268, y + 31, 4, BLUE, 2)
+    c.hline(x + 298, y + 26, 4, BLUE, 2)
+    c.hline(x + 298, y + 31, 4, BLUE, 2)
+    c.text("NV", x + 278, y + 25, 1, WHITE)
 
 
 def draw_lead2(c, x, y, w):
-    """Wall Street surges: a rising skyline and a red arrow climbing
-    past it, +31% at the top."""
+    """Wall Street surges: a fuller skyline with lit windows, a flag on
+    the tallest tower, and a bold red arrow climbing past it, +31%."""
     c.hline(x, y + 46, w, GREY, 1)
-    # skyline, buildings of rising height
-    builds = [(10, 30, 26, 16), (44, 22, 26, 24), (78, 14, 26, 32),
-              (112, 6, 26, 40)]
-    for bx, by, bw, bh in builds:
-        c.rect(x + bx, y + by, bw, bh, BLUE)
-        c.rect(x + bx + 5, y + by + 5, 5, 5, LIGHT)
-        c.rect(x + bx + 16, y + by + 5, 5, 5, LIGHT)
-        c.rect(x + bx + 5, y + by + 14, 5, 5, LIGHT)
-    # rising arrow over the skyline
-    c.line(x + 8, y + 44, x + 300, y + 8, RED, 3)
-    c.line(x + 300, y + 8, x + 282, y + 8, RED, 3)
-    c.line(x + 300, y + 8, x + 296, y + 24, RED, 3)
-    c.text("+31%", x + 236, y + 28, 2, RED)
+    # skyline, six buildings of rising and falling height
+    builds = [(6, 26, 26), (36, 18, 26), (66, 28, 26),
+              (96, 10, 26), (126, 20, 26), (156, 30, 24)]
+    for bx, top, bw in builds:
+        c.rect(x + bx, y + top, bw, 46 - top, BLUE)
+        for wx in (bx + 5, bx + 15):
+            if wx + 4 > bx + bw - 3:
+                continue
+            for wy in range(top + 5, 42, 9):
+                c.rect(x + wx, y + wy, 4, 4, LIGHT)
+    # flag on the tallest tower
+    c.vline(x + 109, y + 2, 8, INK, 1)
+    c.poly([(x + 109, y + 2), (x + 121, y + 5), (x + 109, y + 8)], RED)
+    # bold rising arrow over the skyline
+    c.line(x + 6, y + 44, x + 300, y + 6, RED, 4)
+    c.line(x + 300, y + 6, x + 280, y + 6, RED, 4)
+    c.line(x + 300, y + 6, x + 294, y + 24, RED, 4)
+    c.text("+31%", x + 222, y + 28, 2, RED)
 
 
 def draw_lead3(c, x, y, w):
-    """EU sanctions package: a blue circle of gold stars, an arrow to
-    a stamped document marked 22ND."""
-    # EU circle of stars
+    """EU sanctions package: a gold-rimmed circle of stars, an arrow to
+    a layered document with a red seal, 22ND clear."""
+    # EU circle of stars with a gold rim
     cx, cy = x + 40, y + 24
-    c.circle(cx, cy, 20, BLUE)
+    c.ring(cx, cy, 22, GOLD, 2, BLUE)
     for k in range(12):
         ang = math.radians(k * 30)
         sx = cx + int(13 * math.cos(ang))
@@ -367,14 +392,17 @@ def draw_lead3(c, x, y, w):
     c.line(x + 64, y + 24, x + 104, y + 24, BLUE, 3)
     c.line(x + 104, y + 24, x + 94, y + 18, BLUE, 3)
     c.line(x + 104, y + 24, x + 94, y + 30, BLUE, 3)
-    # document
+    # layered document: back sheet offset, front sheet with seal
+    c.rect(x + 120, y + 8, 92, 40, WHITE)
+    c.box(x + 120, y + 8, 92, 40, GREY, 1)
     c.rect(x + 112, y + 4, 92, 40, WHITE)
     c.box(x + 112, y + 4, 92, 40, INK, 2)
     c.text("22ND", x + 128, y + 10, 2, RED)
-    c.hline(x + 122, y + 30, 50, GREY, 1)
-    c.hline(x + 122, y + 36, 38, GREY, 1)
-    # stamp ring, bottom right of the document
-    c.ring(x + 188, y + 34, 8, RED, 2, WHITE)
+    c.hline(x + 122, y + 28, 56, GREY, 1)
+    c.hline(x + 122, y + 34, 44, GREY, 1)
+    # red seal with a gold centre on the document
+    c.ring(x + 186, y + 38, 7, RED, 2, WHITE)
+    c.circle(x + 186, y + 38, 2, GOLD)
     # caption
     c.text("SANCTIONS", x + 216, y + 18, 1, INK)
     c.text("PACKAGE", x + 216, y + 30, 1, INK)
@@ -383,25 +411,38 @@ def draw_lead3(c, x, y, w):
 # Stylized world map: simplified continent polygons in a 984x64 box.
 # Positions are relative, not a precise projection.
 MAP_CONTINENTS = [
-    [(28, 16), (55, 6), (120, 4), (180, 6), (215, 10), (232, 16),
-     (226, 26), (208, 30), (200, 38), (185, 42), (168, 46), (150, 42),
-     (128, 36), (100, 32), (70, 28), (45, 24), (28, 20)],
-    [(252, 10), (268, 4), (285, 8), (282, 16), (265, 18), (254, 14)],
-    [(258, 30), (300, 26), (330, 30), (335, 40), (325, 52), (310, 60),
-     (300, 62), (290, 52), (275, 42), (262, 36)],
-    [(452, 10), (458, 6), (464, 8), (462, 12), (455, 13)],
-    [(462, 18), (470, 10), (490, 6), (510, 8), (525, 12), (520, 20),
-     (510, 26), (495, 28), (480, 26), (468, 22)],
-    [(465, 28), (500, 24), (540, 26), (565, 32), (560, 42), (545, 52),
-     (525, 60), (510, 62), (495, 54), (480, 44), (468, 36)],
-    [(535, 14), (560, 6), (620, 4), (700, 4), (780, 6), (850, 8),
-     (875, 14), (860, 22), (830, 28), (790, 34), (750, 38), (700, 40),
-     (650, 38), (600, 34), (560, 30), (540, 22)],
-    [(640, 34), (668, 32), (656, 46), (644, 44)],
-    [(845, 48), (870, 42), (905, 42), (930, 48), (925, 56), (895, 60),
-     (860, 58), (845, 54)],
+    [(28, 16), (40, 10), (55, 6), (80, 4), (120, 4), (150, 5),
+     (180, 6), (205, 8), (215, 10), (232, 16), (226, 26), (214, 30),
+     (208, 30), (200, 38), (192, 42), (185, 42), (176, 44), (168, 46),
+     (158, 44), (150, 42), (135, 38), (128, 36), (110, 33), (100, 32),
+     (80, 29), (70, 28), (55, 26), (45, 24), (36, 22), (28, 20)],
+    [(252, 10), (260, 6), (268, 4), (276, 6), (285, 8), (282, 16),
+     (272, 18), (265, 18), (258, 16), (254, 14)],
+    [(258, 30), (272, 27), (300, 26), (315, 28), (330, 30), (335, 40),
+     (330, 48), (325, 52), (318, 58), (310, 60), (302, 62), (296, 56),
+     (290, 52), (282, 44), (275, 42), (268, 38), (262, 36)],
+    [(452, 10), (456, 7), (460, 6), (464, 8), (463, 11), (459, 13),
+     (455, 13)],
+    [(462, 18), (468, 12), (476, 9), (490, 6), (502, 7), (510, 8),
+     (518, 10), (525, 12), (522, 17), (520, 20), (514, 24), (510, 26),
+     (502, 28), (495, 28), (486, 27), (480, 26), (472, 24), (468, 22)],
+    [(465, 28), (480, 25), (500, 24), (520, 25), (540, 26), (555, 29),
+     (565, 32), (562, 38), (560, 42), (552, 48), (545, 52), (535, 57),
+     (525, 60), (516, 62), (510, 62), (503, 58), (495, 54), (487, 48),
+     (480, 44), (474, 40), (468, 36)],
+    [(535, 14), (550, 9), (575, 6), (620, 4), (680, 4), (740, 5),
+     (780, 6), (820, 7), (850, 8), (868, 11), (875, 14), (868, 19),
+     (860, 22), (845, 25), (830, 28), (805, 31), (790, 34), (765, 36),
+     (750, 38), (720, 39), (700, 40), (670, 39), (650, 38), (620, 36),
+     (600, 34), (575, 32), (560, 30), (548, 26), (540, 22)],
+    [(640, 34), (652, 32), (668, 32), (664, 38), (656, 46), (648, 46),
+     (644, 44)],
+    [(845, 48), (858, 44), (870, 42), (888, 42), (905, 42), (918, 45),
+     (930, 48), (928, 52), (925, 56), (910, 59), (895, 60), (878, 59),
+     (860, 58), (850, 55), (845, 54)],
 ]
-MAP_ISLANDS = [(800, 42), (815, 44), (830, 42), (860, 18), (868, 22)]
+MAP_ISLANDS = [(800, 42), (815, 44), (830, 42), (860, 18), (868, 22),
+               (878, 28), (948, 50), (955, 56)]
 # (u, v, label, label_x, label_y) - marker dots + labels
 MAP_MARKERS = [
     (78, 26, "NVIDIA", 57, 14),
