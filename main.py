@@ -11,6 +11,7 @@ Run: python3 main.py
 Writes entry.png (1024x1024) to $MAKEFUN_OUTPUT_DIR or the current dir.
 """
 
+import math
 import os
 import struct
 import zlib
@@ -25,6 +26,7 @@ GREY = (110, 108, 100)
 LIGHT = (238, 233, 220)
 WHITE = (255, 255, 255)
 GOLD = (176, 128, 20)
+MAPFILL = (196, 218, 236)
 
 # ---------------------------------------------------------------- font
 # 5x7 bitmap glyphs, one row per int, bit 4 = leftmost column.
@@ -158,6 +160,68 @@ class Canvas:
         self.hline(x, y + h - thick, w, color, thick)
         self.vline(x, y, h, color, thick)
         self.vline(x + w - thick, y, h, color, thick)
+
+    def line(self, x0, y0, x1, y1, color, thick=1):
+        """Bresenham line."""
+        dx = abs(x1 - x0)
+        dy = -abs(y1 - y0)
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+        err = dx + dy
+        while True:
+            if thick == 1:
+                self.set(x0, y0, color)
+            else:
+                self.rect(x0 - thick // 2, y0 - thick // 2,
+                          thick, thick, color)
+            if x0 == x1 and y0 == y1:
+                break
+            e2 = 2 * err
+            if e2 >= dy:
+                err += dy
+                x0 += sx
+            if e2 <= dx:
+                err += dx
+                y0 += sy
+
+    def poly(self, pts, color):
+        """Scanline fill of a polygon (even-odd rule)."""
+        if len(pts) < 3:
+            return
+        ys = [p[1] for p in pts]
+        n = len(pts)
+        for y in range(min(ys), max(ys) + 1):
+            xs = []
+            for i in range(n):
+                x0, y0 = pts[i]
+                x1, y1 = pts[(i + 1) % n]
+                if y0 == y1:
+                    continue
+                if (y0 <= y < y1) or (y1 <= y < y0):
+                    xs.append(x0 + (y - y0) * (x1 - x0) / (y1 - y0))
+            xs.sort()
+            for i in range(0, len(xs) - 1, 2):
+                self.hline(int(xs[i]), y,
+                           int(xs[i + 1]) - int(xs[i]) + 1, color)
+
+    def polyline(self, pts, color, thick=1):
+        """Closed polygon outline."""
+        n = len(pts)
+        for i in range(n):
+            x0, y0 = pts[i]
+            x1, y1 = pts[(i + 1) % n]
+            self.line(x0, y0, x1, y1, color, thick)
+
+    def circle(self, cx, cy, r, color):
+        """Filled circle."""
+        for y in range(cy - r, cy + r + 1):
+            dx = int((r * r - (y - cy) ** 2) ** 0.5)
+            self.hline(cx - dx, y, 2 * dx + 1, color)
+
+    def ring(self, cx, cy, r, color, thick=1, inner=WHITE):
+        """Circle outline: filled disc, then a smaller disc of `inner`."""
+        self.circle(cx, cy, r, color)
+        self.circle(cx, cy, r - thick, inner)
 
     def text(self, s, x, y, scale, color):
         cx = x
@@ -300,6 +364,140 @@ DATE_CHECK = ("EVERY STORY ON THIS PAGE HAPPENED OR WAS FIRST REPORTED ON "
               "(22 NOV) - EU-INDONESIA TRADE DEAL (21 NOV).")
 
 
+# ---------------------------------------------------------------- illustrations
+# Hand-drawn scenes for the three lead stories and a stylized world map.
+# All shapes are code-drawn lines/polygons/circles: no photos, no PIL,
+# no network. Written fresh for this revision; each scene is 48 px tall.
+
+def draw_lead1(c, x, y, w):
+    """Nvidia CEO returns: a figure walks back through an office door,
+    a red BACK arrow points in, a chip waits on the right."""
+    c.hline(x, y + 46, w, GREY, 1)
+    # open doorway, left
+    c.box(x + 8, y + 2, 36, 44, INK, 2)
+    # figure walking in through the door
+    hx, hy = x + 26, y + 14
+    c.circle(hx, hy, 4, INK)
+    c.line(hx, hy + 5, hx, hy + 18, INK, 2)
+    c.line(hx, hy + 23, hx - 7, hy + 32, INK, 2)
+    c.line(hx, hy + 23, hx + 7, hy + 30, INK, 2)
+    c.line(hx, hy + 10, hx - 8, hy + 15, INK, 2)
+    c.line(hx, hy + 10, hx + 8, hy + 14, INK, 2)
+    # red BACK arrow pointing left into the door
+    c.line(x + 262, y + 16, x + 58, y + 16, RED, 3)
+    c.line(x + 58, y + 16, x + 72, y + 9, RED, 3)
+    c.line(x + 58, y + 16, x + 72, y + 23, RED, 3)
+    c.text("BACK", x + 140, y + 4, 1, RED)
+    # chip, right
+    c.rect(x + 272, y + 22, 26, 20, BLUE)
+    for px in (x + 278, x + 286, x + 294):
+        c.vline(px, y + 18, 4, BLUE, 2)
+        c.vline(px, y + 42, 4, BLUE, 2)
+    c.hline(x + 268, y + 28, 4, BLUE, 2)
+    c.hline(x + 268, y + 34, 4, BLUE, 2)
+    c.hline(x + 298, y + 28, 4, BLUE, 2)
+    c.hline(x + 298, y + 34, 4, BLUE, 2)
+    c.text("NV", x + 278, y + 29, 1, WHITE)
+
+
+def draw_lead2(c, x, y, w):
+    """Wall Street surges: a rising skyline and a red arrow climbing
+    past it, +31% at the top."""
+    c.hline(x, y + 46, w, GREY, 1)
+    # skyline, buildings of rising height
+    builds = [(10, 30, 26, 16), (44, 22, 26, 24), (78, 14, 26, 32),
+              (112, 6, 26, 40)]
+    for bx, by, bw, bh in builds:
+        c.rect(x + bx, y + by, bw, bh, BLUE)
+        c.rect(x + bx + 5, y + by + 5, 5, 5, LIGHT)
+        c.rect(x + bx + 16, y + by + 5, 5, 5, LIGHT)
+        c.rect(x + bx + 5, y + by + 14, 5, 5, LIGHT)
+    # rising arrow over the skyline
+    c.line(x + 8, y + 44, x + 300, y + 8, RED, 3)
+    c.line(x + 300, y + 8, x + 282, y + 8, RED, 3)
+    c.line(x + 300, y + 8, x + 296, y + 24, RED, 3)
+    c.text("+31%", x + 236, y + 28, 2, RED)
+
+
+def draw_lead3(c, x, y, w):
+    """EU sanctions package: a blue circle of gold stars, an arrow to
+    a stamped document marked 22ND."""
+    # EU circle of stars
+    cx, cy = x + 40, y + 24
+    c.circle(cx, cy, 20, BLUE)
+    for k in range(12):
+        ang = math.radians(k * 30)
+        sx = cx + int(13 * math.cos(ang))
+        sy = cy + int(13 * math.sin(ang))
+        c.circle(sx, sy, 2, GOLD)
+    # arrow from the circle to the document
+    c.line(x + 64, y + 24, x + 104, y + 24, BLUE, 3)
+    c.line(x + 104, y + 24, x + 94, y + 18, BLUE, 3)
+    c.line(x + 104, y + 24, x + 94, y + 30, BLUE, 3)
+    # document
+    c.rect(x + 112, y + 4, 92, 40, WHITE)
+    c.box(x + 112, y + 4, 92, 40, INK, 2)
+    c.text("22ND", x + 128, y + 10, 2, RED)
+    c.hline(x + 122, y + 30, 50, GREY, 1)
+    c.hline(x + 122, y + 36, 38, GREY, 1)
+    # stamp ring, bottom right of the document
+    c.ring(x + 188, y + 34, 8, RED, 2, WHITE)
+    # caption
+    c.text("SANCTIONS", x + 216, y + 18, 1, INK)
+    c.text("PACKAGE", x + 216, y + 30, 1, INK)
+
+
+# Stylized world map: simplified continent polygons in a 984x64 box.
+# Positions are relative, not a precise projection.
+MAP_CONTINENTS = [
+    [(28, 16), (55, 6), (120, 4), (180, 6), (215, 10), (232, 16),
+     (226, 26), (208, 30), (200, 38), (185, 42), (168, 46), (150, 42),
+     (128, 36), (100, 32), (70, 28), (45, 24), (28, 20)],
+    [(252, 10), (268, 4), (285, 8), (282, 16), (265, 18), (254, 14)],
+    [(258, 30), (300, 26), (330, 30), (335, 40), (325, 52), (310, 60),
+     (300, 62), (290, 52), (275, 42), (262, 36)],
+    [(452, 10), (458, 6), (464, 8), (462, 12), (455, 13)],
+    [(462, 18), (470, 10), (490, 6), (510, 8), (525, 12), (520, 20),
+     (510, 26), (495, 28), (480, 26), (468, 22)],
+    [(465, 28), (500, 24), (540, 26), (565, 32), (560, 42), (545, 52),
+     (525, 60), (510, 62), (495, 54), (480, 44), (468, 36)],
+    [(535, 14), (560, 6), (620, 4), (700, 4), (780, 6), (850, 8),
+     (875, 14), (860, 22), (830, 28), (790, 34), (750, 38), (700, 40),
+     (650, 38), (600, 34), (560, 30), (540, 22)],
+    [(640, 34), (668, 32), (656, 46), (644, 44)],
+    [(845, 48), (870, 42), (905, 42), (930, 48), (925, 56), (895, 60),
+     (860, 58), (845, 54)],
+]
+MAP_ISLANDS = [(800, 42), (815, 44), (830, 42), (860, 18), (868, 22)]
+# (u, v, label, label_x, label_y) - marker dots + labels
+MAP_MARKERS = [
+    (78, 26, "NVIDIA", 57, 14),
+    (212, 22, "WALL ST", 220, 19),
+    (478, 16, "EU", 470, 4),
+    (538, 12, "KYIV", 546, 8),
+    (640, 10, "RUSSIA", 622, 20),
+    (608, 30, "IRAN", 588, 40),
+    (688, 34, "NEPAL", 670, 44),
+    (734, 36, "MYANMAR", 712, 46),
+]
+
+
+def draw_world_map(c, x, y, w, h):
+    """Stylized continents + red markers where the big stories happened."""
+    sx = w / 984.0
+    sy = h / 64.0
+    for poly in MAP_CONTINENTS:
+        pts = [(x + int(u * sx), y + int(v * sy)) for u, v in poly]
+        c.poly(pts, MAPFILL)
+        c.polyline(pts, BLUE, 1)
+    for u, v in MAP_ISLANDS:
+        c.ring(x + int(u * sx), y + int(v * sy), 3, BLUE, 1, MAPFILL)
+    for u, v, label, lx, ly in MAP_MARKERS:
+        mx, my = x + int(u * sx), y + int(v * sy)
+        c.circle(mx, my, 3, RED)
+        c.text(label, x + int(lx * sx), y + int(ly * sy), 1, INK)
+
+
 # ---------------------------------------------------------------- layout
 def draw(c):
     MX = 20                      # side margin
@@ -307,8 +505,8 @@ def draw(c):
 
     # ---- masthead
     y = 14
-    c.text_center("THE WORLD IN ONE DAY", W // 2, y, 5, INK)
-    y += 5 * 7 + 8
+    c.text_center("THE WORLD IN ONE DAY", W // 2, y, 4, INK)
+    y += 4 * 7 + 8
     c.hline(MX, y, CW, INK, 3)
     y += 9
     c.text_center("MONDAY 23 NOVEMBER 2026", W // 2, y, 2, RED)
@@ -317,11 +515,11 @@ def draw(c):
 
     # ---- stat strip
     y += 8
-    c.rect(MX, y, CW, 26, INK)
+    c.rect(MX, y, CW, 22, INK)
     c.text_center("52 STORIES  -  10 OUTLETS  -  ONE DAY  -  "
                   "MARKETS, WAR, POLITICS, CULTURE, SPORT",
-                  W // 2, y + 6, 2, WHITE)
-    y += 26 + 10
+                  W // 2, y + 4, 2, WHITE)
+    y += 22 + 8
 
     # ---- leads: three columns
     lead_top = y
@@ -342,33 +540,30 @@ def draw(c):
         for line in wrap(body, col_w, 1):
             c.text(line, x, cy, 1, INK)
             cy += 11
-        if i == 1:
-            # Small bar chart: Monday index moves, percent.
-            cy += 6
-            bars = [("S+P 500", 4.73), ("NASDAQ", 6.51), ("DOW", 3.01)]
-            bx = x
-            for name, val in bars:
-                bh = int(val * 4)
-                c.rect(bx, cy + 30 - bh, 34, bh, BLUE)
-                c.text("+%.2f" % val, bx - 2, cy + 32, 1, INK)
-                c.text(name, bx - 2, cy + 44, 1, GREY)
-                bx += 62
-            cy += 52
+        # Hand-drawn illustration for the lead story (48 px tall).
+        cy += 4
+        if i == 0:
+            draw_lead1(c, x, cy, col_w)
+        elif i == 1:
+            draw_lead2(c, x, cy, col_w)
+        else:
+            draw_lead3(c, x, cy, col_w)
+        cy += 48
         lead_bottom = max(lead_bottom, cy)
     # vertical dividers between lead columns
     for i in (1, 2):
         dx = MX + i * (col_w + 16) - 8
         c.vline(dx, lead_top, lead_bottom - lead_top, GREY, 1)
-    y = lead_bottom + 8
+    y = lead_bottom + 6
     c.hline(MX, y, CW, INK, 2)
-    y += 8
+    y += 6
 
     # ---- featured: two columns, five rows each
     c.text("FEATURED", MX, y, 2, RED)
-    y += 20
+    y += 18
     feat_top = y
     fcol_w = (CW - 16) // 2
-    row_h = 60
+    row_h = 58
     for idx, (head, body) in enumerate(FEATURED):
         col = idx % 2
         row = idx // 2
@@ -386,11 +581,11 @@ def draw(c):
             cy += 11
     y = feat_top + 5 * row_h + 2
     c.hline(MX, y, CW, INK, 2)
-    y += 8
+    y += 6
 
     # ---- ALSO list: two columns, one line per story
     c.text("ALSO IN THE NEWS - 23 NOVEMBER", MX, y, 2, RED)
-    y += 20
+    y += 18
     also_top = y
     acol_w = (CW - 16) // 2
     left = ALSO[:20]
@@ -398,28 +593,36 @@ def draw(c):
     for line in ALSO:
         assert text_width(line, 1) <= acol_w, "ALSO line too long: %r" % line
     for i, line in enumerate(left):
-        c.text(line, MX, also_top + i * 11, 1, INK)
+        c.text(line, MX, also_top + i * 9, 1, INK)
     for i, line in enumerate(right):
-        c.text(line, MX + acol_w + 16, also_top + i * 11, 1, INK)
-    y = also_top + 20 * 11 + 6
+        c.text(line, MX + acol_w + 16, also_top + i * 9, 1, INK)
+    y = also_top + 20 * 9 + 4
     c.hline(MX, y, CW, INK, 2)
-    y += 8
+    y += 6
+
+    # ---- world map: stylized continents + markers for the big stories
+    c.text("WORLD MAP - WHERE THE NEWS HAPPENED", MX, y, 1, RED)
+    y += 11
+    draw_world_map(c, MX, y, CW, 66)
+    y += 66 + 6
+    c.hline(MX, y, CW, INK, 2)
+    y += 6
 
     # ---- DATE CHECK box
-    box_h = 72
+    box_h = 66
     c.box(MX, y, CW, box_h, INK, 2)
     c.text("DATE CHECK - 23 NOVEMBER 2026 ONLY", MX + 12, y + 8, 2, RED)
     by = y + 30
     for line in wrap(DATE_CHECK, CW - 24, 1):
         c.text(line, MX + 12, by, 1, INK)
         by += 11
-    y += box_h + 8
+    y += box_h + 6
 
     # ---- sources + footer
     c.text_center(SOURCES, W // 2, y, 1, INK)
-    y += 12
+    y += 10
     c.hline(MX, y, CW, GREY, 1)
-    y += 8
+    y += 6
     c.text_center("ALL 52 STORIES VERIFIED AGAINST THE NAMED SOURCE - "
                   "MONDAY 23 NOVEMBER 2026", W // 2, y, 1, GREY)
     y += 11
